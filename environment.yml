@@ -1,0 +1,19 @@
+name: fenics_env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - numpy
+  - scipy
+  - pandas
+  - scikit-learn
+  - scikit-sparse
+  - pymatting
+  - scikit-image
+  - matplotlib
+  - fenics
+  - ipykernel
+  - mshr
+  - pip
+  - pip:
+    - -e .
