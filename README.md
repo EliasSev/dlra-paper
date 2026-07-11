@@ -53,3 +53,33 @@ src/dlra/
 See [`docs/PROBLEM_SETUP.md`](docs/PROBLEM_SETUP.md) for the mathematical
 reference (the inverse problem, weights, and the DLRA / DLRA-CG / DLRA-PCG
 algorithms) and how it maps to the code above.
+
+## Usage
+
+```python
+from dlra import DynamicalLowRankCG
+from dlra.problem import TestProblemSetup
+
+# Generate an inverse problem (K, M_dx, M_ds, Vh, etc.)
+setup = TestProblemSetup(n=32, sigma=1, c=1)
+pb = setup.build(name='II')  # 'I', 'II', etc.
+
+# DLRA-CG solver
+solver = DynamicalLowRankCG(operator=pb.operator)
+x_hat = solver.solve(
+    y=pb.y,
+    w=pb.weights,
+    lambda_=1e-4,
+    max_rank=2
+)
+
+# Plot the reconstruction
+from fenics import Function, plot
+f = Function(pb.Vh)  # pb.Vh: FunctionSpace
+f.vector()[:] = x_hat
+plot(f)
+```
+
+`x_hat` is the reconstructed source as a flat FE coefficient vector; see
+`notebooks/01_test.ipynb` and `notebooks/02_dlra_cg_test.ipynb` for full
+examples, including plotting and comparisons against other solvers.
