@@ -1,3 +1,7 @@
+# DLRA-CG
+
+Dynamical low-rank approximation with conjugate search directions (DLRA-CG) for a Tikhonov-regularized elliptic inverse source problem. This project is based on my master's thesis, [masters-thesis](https://github.com/EliasSev/masters-thesis), split off to focus on the DLRA-CG contribution and turn it into a paper.
+
 ## Requirements
 - Conda / Miniforge / Mambaforge
 - Linux or macOS (recommended for FEniCS)
