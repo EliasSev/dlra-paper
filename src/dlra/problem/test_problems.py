@@ -71,6 +71,10 @@ class TestProblem:
     def weights(self) -> NDArray:
         return self.operator.weights
 
+    @property
+    def weights_star(self) -> NDArray:
+        return self.operator.weights_star
+
 
 PROBLEM_REGISTRY: dict[str, ProblemSpec] = {
     "I": ProblemSpec(

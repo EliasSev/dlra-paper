@@ -33,7 +33,7 @@ class ForwardOperator:
     sigma, c:   Coefficients of -div(sigma grad u) + c u = f.
 
     Eager attributes: bdofs, N, N_b, A, M_dx, M_ds.
-    Lazy properties:  T, chol_A, K, K_star, weights.
+    Lazy properties:  T, chol_A, K, K_star, weights, weights_star.
     """
 
     def __init__(self, Vh: FunctionSpace, sigma: float = 1.0, c: float = 1.0):
@@ -151,6 +151,37 @@ class ForwardOperator:
 
         C = Vr.T @ self.M_dx @ Vr        # (r, r)
         w_sq = np.sum(Vr * (Vr @ C), axis=1)
+
+        volumes = np.array(self.M_dx.sum(axis=1)).flatten()
+        return np.sqrt(np.maximum(w_sq, 0)) / volumes
+
+    @cached_property
+    def weights_star(self) -> NDArray:
+        """
+        Elvetun-Nielsen weights built from the M_dx-orthogonal projector onto
+        range(K*) (the adjoint's range) rather than range(K^T),
+            w_i^2 = (M_dx Vr Vr^T M_dx)_ii / vol_i^2,
+        with Vr an M_dx-orthonormal basis of range(K*) = ker(K)^{perp_M}.
+
+        Same nullspace as `weights`, but the recoverable subspace is the
+        complement taken in the M_dx inner product instead of the Euclidean one,
+        which is the natural choice in the FE mass-matrix geometry.
+        """
+        return self._weights_star()
+
+    def _weights_star(self, tol: float = 1e-12) -> NDArray:
+        # Whiten the domain: M_dx = R^T R, so K~ = K R^{-1} has Euclidean-
+        # orthonormal right singular vectors that pull back to M_dx-orthonormal
+        # ones. Only M_dx matters -- ker(K) is inner-product-free, and its
+        # M-orthogonal complement (= range(K*)) does not depend on M_ds.
+        R = np.linalg.cholesky(self.M_dx.toarray()).T    # upper, M_dx = R^T R
+        Ktilde = self.K @ np.linalg.inv(R)               # whiten the domain
+        _, s, Vt = np.linalg.svd(Ktilde, full_matrices=False)
+        r = np.sum(s > (s[0] * tol))                     # numerical rank of K
+        Vr = np.linalg.solve(R, Vt[:r, :].T)             # (N, r), M_dx-orthonormal
+
+        MVr = self.M_dx @ Vr                             # (N, r)
+        w_sq = np.sum(MVr * MVr, axis=1)                 # (M_dx Vr Vr^T M_dx)_ii
 
         volumes = np.array(self.M_dx.sum(axis=1)).flatten()
         return np.sqrt(np.maximum(w_sq, 0)) / volumes
