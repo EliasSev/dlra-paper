@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DLRA-CG Project Recap</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/theme/white.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=Source+Serif+4:ital,wght@0,400..700;1,400..700&display=swap">
+<style>
+  :root {
+    --bg: #F7F6F2; --bg2: #ECEAE3; --card: #FFFDF8;
+    --ink: #1C1E3A; --body: #4A4E63; --muted: #5A5E73;
+    --accent: #C2531F; --accent-text: #B04A1A;
+    --dark: #1C1E3A; --dark-ink: #F2EFE6; --dark-muted: #C9C6D8; --dark-accent: #F0A35E;
+  }
+  .reveal-viewport { background: var(--bg); }
+  .reveal { font-family: 'IBM Plex Sans', Arial, sans-serif; font-size: 30px; color: var(--body); }
+  .reveal .slides { text-align: left; }
+  .reveal .slides section { height: 100%; }
+  .reveal h1, .reveal h2, .reveal h3 {
+    font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; color: var(--ink);
+    text-transform: none; line-height: 1.15; letter-spacing: 0;
+  }
+  .reveal h2 { font-size: 56px; margin-bottom: 36px; }
+  .reveal h3 { font-size: 38px; margin: 0 0 12px; }
+  .reveal p, .reveal li { line-height: 1.45; }
+  .reveal img { margin: 0; }
+  .eyebrow { font-size: 22px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent-text); font-weight: 600; margin: 0 0 8px; }
+  .caption { font-size: 22px; color: var(--muted); margin-top: 8px; }
+  .cols { display: flex; gap: 48px; align-items: center; }
+  .cols.top { align-items: stretch; }
+  .cols > * { flex: 1; }
+  .card { background: var(--bg2); padding: 36px; border-radius: 16px; }
+  .card.hl { background: var(--card); border: 3px solid var(--accent); }
+  .card .eyebrow.grey { color: var(--muted); }
+  .eq { background: var(--bg2); padding: 8px 28px; border-radius: 12px; font-size: 34px; }
+  .big { font-family: 'Source Serif 4', Georgia, serif; font-size: 110px; font-weight: 600; line-height: 1; color: var(--accent-text); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .grid2 .card { background: #FBFAF6; }
+  .grid2 .card.hl { background: var(--card); }
+  .reveal table { font-size: 26px; }
+  .reveal table tr.hl { background: #F6DCCB; }
+  /* dark statement slides */
+  .reveal section.dark { color: var(--dark-muted); }
+  .reveal section.dark h1, .reveal section.dark h2 { color: var(--dark-ink); }
+  .reveal section.dark .eyebrow { color: var(--dark-accent); }
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- 1 -->
+<section class="dark" data-background-color="#1C1E3A">
+  <p class="eyebrow">Project recap · October 2026</p>
+  <h1 style="font-size:80px">DLRA with conjugate search directions</h1>
+  <p style="font-size:32px">Thesis recap and DLRA progress</p>
+  <p style="margin-top:80px">Elias J. Severinsen <br>
+  Ole L. Elvetun<br>
+  Jonas Kusch</p>
+  <aside class="notes">Short recap after the summer break. First the thesis story, then the one new thing tested since: the steepest-descent variant from the supervisor’s note. About 15 minutes, then discussion.</aside>
+</section>
+
+<!-- 2 -->
+<section>
+  <p class="eyebrow">Where we are</p>
+  <h2>Master thesis contributions, and what goes in the paper</h2>
+  <div class="cols top">
+    <div class="card">
+      <p class="eyebrow grey">Master’s thesis</p>
+      <h3>Two contributions</h3>
+      <ol>
+        <li><b>Efficient Elvetun–Nielsen weights.</b> A matrix-free rSVD computes \(W\) without ever forming the forward operator \(K\). A low-rank SVD \(K = U \Sigma V^T \) is obtained.</li>
+        <li><b>DLRA-CG.</b> Dynamical low-rank approximation with conjugate-gradient search directions, applied to this problem with the Elvetun–Nielsen weights.</li>
+      </ol>
+    </div>
+    <div class="card hl">
+      <p class="eyebrow">The paper</p>
+      <h3>DLRA-CG</h3>
+      <p>The DLRA part(?): DLRA-CG with restarts and the preconditioned DLRA-PCG, compared with full-rank CG and DLRA with steepest descent.</p>
+      <p>The weights \(W\) are known.</p>
+      <p>What about the SVD of \(K\)?.</p>
+    </div>
+  </div>
+  <aside class="notes">Thesis contribution 1: the rSVD makes the Elvetun–Nielsen weights computable without forming K; the SVD of K was a by-product we also used for speedups. Contribution 2: DLRA with CG for this problem and these weights. The paper focuses on contribution 2 and treats W and K's factors as inputs.</aside>
+</section>
+
+<!-- 3 -->
+<section>
+  <p class="eyebrow">The problem</p>
+  <h2>Find an interior source from boundary measurements</h2>
+  <div class="cols">
+    <div>
+      <p>Elliptic PDE \(-\nabla\cdot(\sigma\nabla u) + cu = f\), no flux over the boundary. We see \(u\) only on the boundary and want \(f\).</p>
+      <div class="eq">\[\min_x\ \Phi(x) = \tfrac12\|Kx-y\|^2 + \tfrac{\lambda^2}{2}\|Wx\|^2\]</div>
+      <p>Ill-posed: \(K\) has fast-decaying singular values and a large null space. \(H = K^\top K + \lambda^2 W^\top W\) is SPD but badly conditioned (\(\kappa \approx 10^9\) at \(\lambda = 10^{-4}\)).</p>
+    </div>
+    <div>
+      <img src="../thesis/figures_png/problem_illustration.png" alt="Three test problems">
+      <p class="caption">Test problems I (one source), II (three sources), III (L-shaped domain)</p>
+    </div>
+  </div>
+  <aside class="notes">Norms are FE-weighted (mass matrices) in the real formulation; dropped here for readability. Mesh 64×64 for problems I and II.</aside>
+</section>
+
+<!-- 4 -->
+<section>
+  <p class="eyebrow">Problem 1: location bias</p>
+  <h2>Plain Tikhonov pulls every source to the boundary</h2>
+  <div class="cols">
+    <div>
+      <img src="../thesis/figures_png/standard_tikhonov_solution.png" alt="True source and standard Tikhonov reconstruction">
+      <p class="caption">True source (left) and standard Tikhonov, \(W = I\) (right)</p>
+    </div>
+    <div>
+      <p>Interior sources lie mostly in the null space of \(K\), so the minimum-norm solution damps them.</p>
+      <p><b>Elvetun-Nielsen weights</b> scale each basis function by how visible it is to \(K\):</p>
+      <div class="eq">\[w_i = \frac{\|VV^\top e_i\|_M}{\|\phi_i\|_M}, \qquad W = \operatorname{diag}(w)\]</div>
+    </div>
+  </div>
+  <aside class="notes">VV^T is the projection onto the complement of the null space of K. Weights are given input for the paper.</aside>
+</section>
+
+<!-- 5 -->
+<section>
+  <p class="eyebrow">Problem 2: smoothing</p>
+  <h2>Elvetun-Nielsen weighted Tikhonov finds the source location, but blurs them together</h2>
+  <img src="../thesis/figures_png/test_problem_II.png" alt="Weighted Tikhonov reconstructions of problem II">
+  <p>Problem II, weighted Tikhonov (exact \(K\), then rSVD with \(k=10\) and \(k=50\)). Locations are right, peaks reach only 0.5–0.6 of the true amplitude 1, and the sources merge into one connected region.</p>
+  <aside class="notes">True sources are sparse, Tikhonov gives smooth solutions. This motivates looking for low-rank solutions instead.</aside>
+</section>
+
+<!-- 6 -->
+<section>
+  <p class="eyebrow">The idea</p>
+  <h2>Sparse sources are low-rank matrices</h2>
+  <img src="../thesis/figures_png/low_rank_source.png" alt="A square source as one outer product" style="max-height:380px">
+  <p>Reshape \(x\) into an \(n\times n\) matrix \(X\). One square source is one outer product (rank 1); problem II is rank 3. So we search only over rank-\(r\) matrices \(X = U\Sigma V^\top\), \(r \ll n\).</p>
+  <aside class="notes">The rank r roughly tracks the number of distinct localized sources. Working with factors means 2nr unknowns instead of n².</aside>
+</section>
+
+<!-- 7 -->
+<section>
+  <p class="eyebrow">The baseline</p>
+  <h2>DLRA: take a step, stay on the rank-\(r\) manifold</h2>
+  <div class="cols">
+    <<img src="../thesis/figures_png/low_rank_manifold.png" alt="Rank-r manifold with tangent plane and projected direction" style="flex:0 0 500px; max-width:500px">
+    <div>
+      <ol>
+        <li>Choose a search direction \(D\)</li>
+        <li>Update \(U, V\) and \(\Sigma\) along \(D\) (the “KLS” step of Schotthöfer et al.)</li>
+        <li>Truncate back to rank \(r\)</li>
+      </ol>
+      <p>Original method: steepest descent, Adam or fixed step with \(\kappa(H)\approx 10^9\) needs \( \approx 10000 \) iterations.</p>
+    </div>
+  </div>
+  <aside class="notes">KLS = basis update and Galerkin integrator; bases augmented to 2r columns, then truncated. Robust, non-stiff (no inverse of Sigma).</aside>
+</section>
+
+<!-- 8 -->
+<section>
+  <p class="eyebrow">The contribution</p>
+  <h2>DLRA-CG</h2>
+  <div class="cols top">
+    <div class="card hl">
+      <h3>Using &ldquo;CG&rdquo; directions</h3>
+      <p>\(\Phi\) is quadratic with SPD Hessian, so CG is natural. Keep the DLRA update, take \(D\) from the CG recurrence:</p>
+      <div class="eq">\[\alpha = \frac{\|G\|^2}{\langle D, HD\rangle}, \qquad D \leftarrow -G + \beta D\]</div>
+      <p>Same cost per iteration as steepest descent.</p>
+    </div>
+    <div class="card">
+      <h3>Restarting the CG</h3>
+      <p>The recurrence updates the gradient along a <b>full-rank</b> path, not at the truncated iterate. They drift apart: the error falls, then rises (semi-convergence).</p>
+      <p><b>Restarted DLRA-CG:</b> every \(N_r\) steps, recompute the true gradient at \(X\) and reset \(D = -G\).</p>
+    </div>
+  </div>
+  <aside class="notes">Fletcher–Reeves beta. Gradient recurrence G_new = G + alpha H D. N_r = 1 is steepest descent; too large and semi-convergence returns. DLRA-PCG replaces G by P^-1 G as usual.</aside>
+</section>
+
+<!-- 9 -->
+<section>
+  <p class="eyebrow">Result 1: speed</p>
+  <h2>Comparison of Convergence Speed</h2>
+  <div class="cols">
+    <div style="flex:2">
+      <img src="../thesis/figures_png/number_of_iterations.png" alt="Relative error per iteration for DLRA step rules and DLRA-CG">
+      <p class="caption">Problem I, rank 1. Right: effect of the restart period \(N_r\).</p>
+    </div>
+    <div>
+      <p class="big">≈210×</p>
+      <p>fewer iterations than DLRA with steepest descent to reach error 0.85 (100 vs 20,916).</p>
+      <p>Only restarted DLRA-CG gets below 0.75.</p>
+    </div>
+  </div>
+  <aside class="notes">Per-iteration cost similar (0.5–0.7 ms), so iterations = runtime. To 0.90: CG 48, restarted 35, SD 1449, Adam 1665, fixed 21751.</aside>
+</section>
+
+<!-- 10 -->
+<section>
+  <p class="eyebrow">Result 2: quality</p>
+  <h2>Low-rank solutions</h2>
+  <div class="cols">
+    <div style="flex:1.6">
+      <img src="../thesis/figures_png/low_rank_restarted_CG.png" alt="Restarted DLRA-CG reconstructions for problems I and II">
+      <p class="caption">Restarted DLRA-CG, \(N_r = 10\). White boxes: true sources.</p>
+    </div>
+    <table>
+      <tr><th>Peak amplitude</th><th>I</th><th>II</th></tr>
+      <tr><td>Weighted Tikhonov</td><td>0.26</td><td>0.48</td></tr>
+      <tr><td>DLRA-CG</td><td>0.28</td><td>0.64</td></tr>
+      <tr class="hl"><td>Restarted</td><td>0.40</td><td>0.80</td></tr>
+    </table>
+  </div>
+  <p>True amplitude is 1. Low-rank solutions also beat <b>exact</b> weighted Tikhonov in Euclidean and AUC-IoU error (problem II: all metrics).</p>
+  <aside class="notes">Weighted Tikhonov row is the full-rank rSVD solution at k = 50.</aside>
+</section>
+
+<!-- 11 -->
+<section>
+  <p class="eyebrow">Result 3: the rank</p>
+  <h2>The rank acts as a regularization parameter</h2>
+  <img src="../thesis/figures_png/low_rank_different_r_II.png" alt="DLRA-CG on problem II at rank 1, 2 and 5">
+  <div class="cols top">
+    <p><b>Too small</b> (\(r=1\)): a spurious fourth source.</p>
+    <p><b>Best</b> (\(r=2\)), although the true rank is 3.</p>
+    <p><b>Too large</b> (\(r=5\)): looks like full-rank Tikhonov.</p>
+  </div>
+  <aside class="notes">The discarded third component is the most smoothed and least important. Residual vs rank showed a corner for problem II, not for I.</aside>
+</section>
+
+<!-- 12 -->
+<section>
+  <p class="eyebrow">Result 4: preconditioning</p>
+  <h2>DLRA-CG with preconditioning (DLRA-PCG)</h2>
+  <div class="cols">
+    <div style="flex:1.6">
+      <img src="../thesis/figures_png/number_of_iterations_preconditioners.png" alt="Convergence with different preconditioners">
+      <p class="caption">Left: no restarts. Right: restart every 10 steps.</p>
+    </div>
+    <div>
+      <p><b>IC + restarts</b> is the best combination: about 8× faster to error 0.75.</p>
+      <p>Stronger preconditioners reach 0.84 in one step, then stall.</p>
+      <p>IC + Woodbury with restarts becomes unstable and lands in a local minimum.</p>
+    </div>
+  </div>
+  <aside class="notes">A stronger preconditioner makes the full-rank CG path reach the Tikhonov solution sooner, leaving the truncated iterate behind. The rank-r manifold is non-convex.</aside>
+</section>
+
+<!-- 13 -->
+<section data-background-color="#ECEAE3">
+  <p class="eyebrow">Left open by the thesis</p>
+  <h2>Open Questions</h2>
+  <div class="grid2">
+    <div class="card"><h3>Semi-convergence</h3><p>When to stop, or how to restart adaptively instead of a fixed \(N_r\).</p></div>
+    <div class="card"><h3>Choosing the rank</h3><p>Results are sensitive to \(r\); a rank-adaptive variant could remove the choice.</p></div>
+    <div class="card hl"><p class="eyebrow">Paper focus</p><h3>Convergence theory</h3><p>No analysis yet that accounts for projection and truncation.</p></div>
+    <div class="card"><h3>Preconditioning</h3><p>Why strong preconditioners stall or diverge on the manifold.</p></div>
+  </div>
+  <aside class="notes">All four from the thesis conclusion. The paper focuses on convergence theory, to make it fit an applied-math journal. Semi-convergence motivates the next method: gradient at the true iterate every step.</aside>
+</section>
+
+<!-- 14 -->
+<section class="dark" data-background-color="#1C1E3A">
+  <p class="eyebrow">Since the summer</p>
+  <h2 style="font-size:72px">Riemannian steepest descent with exact line search</h2>
+  <p style="font-size:32px">A low-rank method whose every step is taken from the true iterate</p>
+  <aside class="notes">The one new item since the thesis. Three slides of theory, one comparison with what we had, then where the implementation stands.</aside>
+</section>
+
+<!-- 15 -->
+<section>
+  <p class="eyebrow">Theory</p>
+  <h2>Solve a linear matrix equation on the rank-\(r\) manifold</h2>
+  <div class="cols">
+    <div style="flex:1.3">
+      <p>Consider a general equation with \(\mathcal L\) self-adjoint and SPD:</p>
+      <div class="eq">\[\mathcal L[X] = A_1X + XA_2 + A_3XA_4 = Y\]</div>
+      <p>For us, \(\mathcal L = H\) (the Tikhonov Hessian) and \(Y = \operatorname{mat}(K^\top y)\).</p>
+      <p>On \(\mathcal M_r\) we cannot ask for \(\mathcal L[X] = Y\). We ask for the <b>projected</b> condition</p>
+      <div class="eq">\[P(X)\,\big(\mathcal L[X] - Y\big) = 0,\]</div>
+      <p>the first-order optimality condition of \(\min_{X\in\mathcal M_r}\ \Phi(X) = \tfrac12\langle \mathcal L[X], X\rangle - \langle Y, X\rangle\).</p>
+    </div>
+    <div>
+      <img src="../thesis/figures_png/low_rank_manifold.png" alt="Rank-r manifold with tangent plane and projected direction" style="max-height:340px">
+      <p class="caption">Tangent projection at \(X = USV^\top\):<br>\(P(X)Z = UU^\top Z + ZVV^\top - UU^\top Z VV^\top\)</p>
+    </div>
+  </div>
+  <aside class="notes">G[X] = L[X] − Y is the Euclidean gradient of Phi, the "defect". The Riemannian gradient is its tangent projection P(X)G. We assume the Hessian of Phi is SPD, which holds for our H.</aside>
+</section>
+
+<!-- 16 -->
+<section>
+  <p class="eyebrow">Theory</p>
+  <h2>Projected gradient, then the exact step length</h2>
+  <div class="cols top">
+    <div class="card">
+      <h3>1. Riemannian gradient</h3>
+      <div class="eq" style="font-size:28px">\[G_k = \mathcal L[X_k] - Y\]\[R_k = -P(X_k)\,G_k\]</div>
+      <p>\(\|R_k\|\) is the stopping criterion.</p>
+    </div>
+    <div class="card">
+      <h3>2. Direction</h3>
+      <div class="eq" style="font-size:28px">\[D_k = R_k\]</div>
+      <p>Already a tangent vector, so no extra projection is needed.</p>
+    </div>
+    <div class="card hl">
+      <h3>3. Exact line search</h3>
+      <p>\(\Phi\) is quadratic, so minimize \(\Phi(X_k + \alpha D_k)\) in closed form:</p>
+      <div class="eq" style="font-size:28px">\[\alpha_k = \frac{\|R_k\|_F^2}{\langle R_k, \mathcal L[R_k]\rangle}\]</div>
+    </div>
+  </div>
+  <p>Step 3 uses \(\langle G_k, D_k\rangle = \langle P(X_k)G_k, D_k\rangle = -\|R_k\|^2\), which holds because \(D_k\) is tangent.</p>
+  <aside class="notes">The line search is along the straight line X + alpha D in the ambient space, before retraction, so it is exact for that line, not for the retracted point. Same alpha formula as CG uses, but with the projected gradient.</aside>
+</section>
+
+<!-- 17 -->
+<section>
+  <p class="eyebrow">Theory</p>
+  <h2>Retract with a KLS step, and keep everything thin</h2>
+  <div class="cols top">
+    <div>
+      <h3>Retraction (DLRT update)</h3>
+      <div class="eq" style="font-size:28px">\[\begin{aligned}
+        K' &= U_kS_k - \alpha_k\,G_kV_k, & \hat U &= \operatorname{orth}(K')\\
+        L' &= V_kS_k^\top - \alpha_k\,G_k^\top U_k, & \hat V &= \operatorname{orth}(L')\\
+        \hat S &= (\hat U^\top U_k)\,S_k\,(V_k^\top \hat V) - \alpha_k\,\hat U^\top G_k \hat V
+      \end{aligned}\]</div>
+      <p>Then an \(r\times r\) SVD of \(\hat S\) gives \(U_{k+1}, S_{k+1}, V_{k+1}\). Bases stay rank \(r\).</p>
+    </div>
+    <div>
+      <h3>Three thin factors</h3>
+      <p>Everything above needs only \(U_k^\top G_k\), \(G_kV_k\) and \(U_k^\top G_kV_k\):</p>
+      <div class="eq" style="font-size:28px">\[\|R_k\|^2 = \|U_k^\top G_k\|^2 + \|G_kV_k\|^2 - \|U_k^\top G_kV_k\|^2\]</div>
+      <p>For Sylvester-type \(\mathcal L\) these cost a few products with \(n\times r\) matrices, and no \(n\times n\) matrix is ever formed.</p>
+    </div>
+  </div>
+  <aside class="notes">The denominator of alpha is computed from the same factors plus U^T L[D] and L[D] V. For our H (no Sylvester structure) the implementation applies H to a full n×n matrix instead.</aside>
+</section>
+
+<!-- 18 -->
+<section>
+  <p class="eyebrow">Positioning</p>
+  <h2>How Riemannian SD differs from the thesis methods</h2>
+  <table style="width:100%">
+    <tr><th></th><th>DLRA-SD (thesis)</th><th>DLRA-CG (thesis)</th><th>Riemannian SD</th></tr>
+    <tr><td>Direction</td><td>\(-\nabla\Phi\)</td><td>CG recurrence</td><td>\(-P(X)\nabla\Phi\)</td></tr>
+    <tr><td>Gradient taken at</td><td>true iterate</td><td>full-rank path (drifts)</td><td>true iterate</td></tr>
+    <tr><td>Step size</td><td>exact, full gradient</td><td>CG formula</td><td>exact, tangent direction</td></tr>
+    <tr><td>KLS bases</td><td>\(2r\), then truncate</td><td>\(2r\), then truncate</td><td>\(r\)</td></tr>
+    <tr class="hl"><td>Semi-convergence</td><td>no</td><td>yes</td><td>no drift to cause it</td></tr>
+  </table>
+  <p>Open: Riemannian SD is still steepest descent, so it should converge like \(\kappa\), not \(\sqrt\kappa\). Speed has to come from somewhere else.</p>
+  <aside class="notes">Last row for Riemannian SD is an expectation from the construction, not a measured result: it has not been run on our problems. Natural question for the discussion: is this a baseline, or the foundation for a conjugate-direction method with a convergence proof?</aside>
+</section>
+
+<!-- 19 -->
+<section>
+  <p class="eyebrow">Status</p>
+  <h2>Implemented and checked on a toy problem, not yet on ours</h2>
+  <div class="cols top">
+    <div class="card hl"><p class="eyebrow">Done</p><h3>Two solvers</h3><p>Fully factored version for the Sylvester equation, and a version for our Tikhonov Hessian.</p></div>
+    <div class="card hl"><p class="eyebrow">Done</p><h3>Toy check passes</h3><p>Made-up rank-5 Sylvester problem, \(n=400\): relative error \(6\cdot10^{-12}\) in 22 iterations.</p></div>
+    <div class="card"><p class="eyebrow grey">Not yet</p><h3>Problems I–III</h3><p>No runs on the inverse problem, no comparison with DLRA-CG.</p></div>
+  </div>
+  <p>Caveat: our Hessian has no Sylvester structure, so the inverse-problem version still applies \(H\) to full \(n\times n\) matrices.</p>
+  <aside class="notes">Code: src/dlra/solvers/low_rank_sd.py, classes LowRankSylvesterSD and DynamicalLowRankSD. Toy demo is the file’s __main__ block.</aside>
+</section>
+
+<!-- 20 -->
+<section class="dark" data-background-color="#1C1E3A">
+  <p class="eyebrow">For discussion</p>
+  <h2 style="font-size:72px">Next steps</h2>
+  <ol style="font-size:34px;color:#E4E1EE">
+    <li>Run Riemannian SD on problems I and II, against thesis DLRA-SD and restarted DLRA-CG, with the exact solution as reference</li>
+    <li>Decide its role: a baseline, or the base for a convergence analysis</li>
+    <li>Decide which experiments the paper needs</li>
+  </ol>
+  <aside class="notes">Questions for the supervisors: is the exact-line-search SD meant as a baseline, or a first step toward a conjugate-direction method we can prove things about? Which open questions matter most for an applied-math journal?</aside>
+</section>
+
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/math/math.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1600, height: 900, margin: 0.06,
+    hash: true, slideNumber: 'c', transition: 'fade', center: false,
+    plugins: [RevealMath.KaTeX, RevealNotes]
+  });
+
+  // Laser pointer: press L to toggle; a red dot follows the mouse.
+  const laser = document.createElement('div');
+  laser.style.cssText = 'position:fixed;width:22px;height:22px;margin:-9px 0 0 -9px;border-radius:50%;' +
+    'background:#22e05a;box-shadow:0 0 12px 4px rgba(34,224,90,.6);pointer-events:none;z-index:9999;display:none';
+  document.body.appendChild(laser);
+  document.addEventListener('mousemove', e => { laser.style.left = e.clientX + 'px'; laser.style.top = e.clientY + 'px'; });
+  Reveal.addKeyBinding({ keyCode: 76, key: 'L', description: 'Toggle laser pointer' }, () => {
+    const on = laser.style.display === 'none';
+    laser.style.display = on ? 'block' : 'none';
+    document.body.style.cursor = on ? 'none' : '';
+  });
+</script>
+</body>
+</html>

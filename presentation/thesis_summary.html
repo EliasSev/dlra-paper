@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thesis Summary</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/theme/white.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=Source+Serif+4:ital,wght@0,400..700;1,400..700&display=swap">
+<style>
+  :root {
+    --bg: #F7F6F2; --bg2: #ECEAE3; --card: #FFFDF8;
+    --ink: #1C1E3A; --body: #4A4E63; --muted: #5A5E73;
+    --accent: #C2531F; --accent-text: #B04A1A;
+    --dark: #1C1E3A; --dark-ink: #F2EFE6; --dark-muted: #C9C6D8; --dark-accent: #F0A35E;
+  }
+  .reveal-viewport { background: var(--bg); }
+  .reveal { font-family: 'IBM Plex Sans', Arial, sans-serif; font-size: 30px; color: var(--body); }
+  .reveal .slides { text-align: left; }
+  .reveal .slides section { height: 100%; }
+  .reveal h1, .reveal h2, .reveal h3 {
+    font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; color: var(--ink);
+    text-transform: none; line-height: 1.15; letter-spacing: 0;
+  }
+  .reveal h2 { font-size: 56px; margin-bottom: 36px; }
+  .reveal h3 { font-size: 38px; margin: 0 0 12px; }
+  .reveal p, .reveal li { line-height: 1.45; }
+  .reveal img { margin: 0; }
+  .eyebrow { font-size: 22px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent-text); font-weight: 600; margin: 0 0 8px; }
+  .caption { font-size: 22px; color: var(--muted); margin-top: 8px; }
+  .cols { display: flex; gap: 48px; align-items: center; }
+  .cols.top { align-items: stretch; }
+  .cols > * { flex: 1; }
+  .card { background: var(--bg2); padding: 36px; border-radius: 16px; }
+  .card.hl { background: var(--card); border: 3px solid var(--accent); }
+  .card .eyebrow.grey { color: var(--muted); }
+  .eq { background: var(--bg2); padding: 8px 28px; border-radius: 12px; font-size: 34px; }
+  .big { font-family: 'Source Serif 4', Georgia, serif; font-size: 110px; font-weight: 600; line-height: 1; color: var(--accent-text); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .grid2 .card { background: #FBFAF6; }
+  .grid2 .card.hl { background: var(--card); }
+  .reveal table { font-size: 26px; }
+  .reveal table tr.hl { background: #F6DCCB; }
+  /* dark statement slides */
+  .reveal section.dark { color: var(--dark-muted); }
+  .reveal section.dark h1, .reveal section.dark h2 { color: var(--dark-ink); }
+  .reveal section.dark .eyebrow { color: var(--dark-accent); }
+</style>
+</head>
+<body>
+<div class="reveal"><div class="slides">
+
+<!-- 1 -->
+<section class="dark" data-background-color="#1C1E3A">
+  <p class="eyebrow">Master's thesis · summary</p>
+  <h1 style="font-size:80px">Efficient low-rank methods for PDE-based inverse problems</h1>
+  <p style="font-size:32px">Matrix-free rSVD and DLRA-CG for sparse source identification</p>
+  <p style="margin-top:80px">Elias J. Severinsen<br>
+  Supervisors: Ole L. Elvetun, Jonas Kusch</p>
+</section>
+
+<!-- 2 -->
+<section>
+  <p class="eyebrow">The problem</p>
+  <h2>Find an interior source from boundary measurements</h2>
+  <img src="../thesis/figures_png/forward_illustration.png" alt="Source f, solution u and boundary trace" style="max-height:330px">
+  <p class="caption">The forward operator \(\mathcal K = \mathcal T\circ\mathcal S\) maps a source \(f\) to the boundary values \(u|_{\partial\Omega}\).</p>
+  <div class="cols">
+    <div class="eq">\[\min_f\ \|u-y\|^2_{L^2(\partial\Omega)} + \lambda^2\|Wf\|^2_{L^2(\Omega)}\]</div>
+    <div class="eq" style="font-size:28px">\[-\nabla\cdot\sigma\nabla u + cu = f,\quad \partial_n u = 0\]</div>
+  </div>
+  <aside class="notes">Applications: inverse imaging, crack detection, EEG brain mapping.</aside>
+</section>
+
+<!-- 3 -->
+<section>
+  <p class="eyebrow">Why it is hard</p>
+  <h2>Ill-posed: plain Tikhonov pulls sources to the boundary</h2>
+  <div class="cols">
+    <div>
+      <img src="../thesis/figures_png/standard_tikhonov_solution.png" alt="True source and standard Tikhonov reconstruction">
+      <p class="caption">True source (left) and standard Tikhonov, \(W = I\) (right)</p>
+    </div>
+    <div>
+      <p>\(\mathcal K\) has rapidly decaying singular values and a large null space, so reconstructions are unstable and non-unique.</p>
+      <p><b>Elvetun–Nielsen weights</b> correct the location bias using the SVD \(K = U\Sigma V^\top\):</p>
+      <div class="eq">\[w_i = \frac{\|VV^\top e_i\|_M}{\|\phi_i\|_M}\]</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section>
+  <p class="eyebrow">The gap</p>
+  <h2>The weights fix the location, but two problems remain</h2>
+  <div class="cols top">
+    <div class="card">
+      <h3>1. Cost</h3>
+      <p>The weights need \(K\) formed explicitly and its full SVD. Infeasible for large meshes.</p>
+    </div>
+    <div class="card">
+      <h3>2. Smoothing</h3>
+      <p>Weighted Tikhonov is still smooth: true sources are sparse, but distinct sources blur into one connected region.</p>
+    </div>
+  </div>
+  <img src="../thesis/figures_png/test_problem_II.png" alt="Weighted Tikhonov reconstructions of problem II" style="margin-top:20px; max-height:300px">
+  <p class="caption">Problem II, weighted Tikhonov: exact \(K\) (left), rSVD with \(k=10\) and \(k=50\).</p>
+</section>
+
+<!-- 5 -->
+<section>
+  <p class="eyebrow">Contributions</p>
+  <h2>Two methods, one for each problem</h2>
+  <div class="cols top">
+    <div class="card hl">
+      <p class="eyebrow">Cost</p>
+      <h3>Matrix-free rSVD</h3>
+      <p>A rank-\(k\) SVD of \(K\) from \(k+p\) forward and \(k+p\) adjoint PDE solves. \(K\) is never formed, so weighted Tikhonov scales.</p>
+    </div>
+    <div class="card hl">
+      <p class="eyebrow">Smoothing</p>
+      <h3>DLRA-CG</h3>
+      <p>Dynamical low-rank approximation with conjugate-gradient directions: recovers sparse rank-\(r\) sources, much faster than DLRA.</p>
+    </div>
+  </div>
+  <p>The ranks are independent: \(k\) approximates \(K\), \(r\) is the rank of the source viewed as an \(n\times n\) matrix.</p>
+</section>
+
+<!-- 6 -->
+<section class="dark" data-background-color="#1C1E3A">
+  <p class="eyebrow">Contribution 1</p>
+  <h2 style="font-size:72px">Matrix-free randomized SVD</h2>
+</section>
+
+<!-- 7 -->
+<section>
+  <p class="eyebrow">Method</p>
+  <h2>Sample the range of \(K\) with PDE solves</h2>
+  <div class="cols top">
+    <div>
+      <ol>
+        <li>Draw \(l = k+p\) random vectors \(\Psi\). Compute \(Y = K\Psi\) (forward solves) and \(Q = \operatorname{orth}(Y)\).</li>
+        <li>Form \(B = Q^\top K\) row by row with the adjoint: \(b_i = \big(K^*(M_\partial^{-1}q_i)\big)^\top M\).</li>
+        <li>SVD \(B = \tilde U\Sigma V^\top\), set \(U = Q\tilde U\): \(K \approx U\Sigma V^\top\).</li>
+      </ol>
+      <p>One sparse Cholesky of the PDE matrix is reused for every solve.</p>
+    </div>
+    <div class="card">
+      <h3>Cost</h3>
+      <p>Explicit \(K\): \(N_b\) solves, then a dense SVD.</p>
+      <p>rSVD: \(2l\) solves, \(\mathcal O(lN_bN)\), with \(l\) a small constant.</p>
+    </div>
+  </div>
+  <aside class="notes">Also a variant applying the rSVD to K* (Algorithm 3.2): mixed results, see limitations.</aside>
+</section>
+
+<!-- 8 -->
+<section>
+  <p class="eyebrow">Result: speed</p>
+  <h2>Previously infeasible problems become cheap</h2>
+  <div class="cols">
+    <div style="flex:2">
+      <img src="../thesis/figures_png/rsvd_computational_time_comp.png" alt="Computational time of rSVD versus forming K and its SVD">
+      <p class="caption">Left: rSVD vs forming \(K\) (\(t_K\)) and its SVD. Right: rSVD alone, up to \(N = 300{,}000\).</p>
+    </div>
+    <div>
+      <p class="big">13–25×</p>
+      <p>faster than \(t_K + t_{\text{SVD}}\) at \(N = 100{,}000\) (\(k = 50\) and \(k = 10\)).</p>
+      <p>The rSVD grows roughly linearly in \(N\); the gap widens with mesh size.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 -->
+<section>
+  <p class="eyebrow">Result: quality</p>
+  <h2>\(k \approx 50\) is enough, independent of mesh size</h2>
+  <img src="../thesis/figures_png/rsvd_over_k_II.png" alt="Reconstruction error versus target rank k, problem II">
+  <p class="caption">Problem II: Euclidean, EMD and AUC-IoU error vs target rank \(k\). Dashed: exact weighted Tikhonov. Mean ± 1 std over 50 runs.</p>
+  <table style="margin-top:12px">
+    <tr><th>Euclidean error vs exact, \(k=50\)</th><th>I</th><th>II</th><th>III</th></tr>
+    <tr class="hl"><td>Relative difference</td><td>0.56%</td><td>2.44%</td><td>2.92%</td></tr>
+  </table>
+</section>
+
+<!-- 10 -->
+<section>
+  <p class="eyebrow">Result: noise</p>
+  <h2>On noisy data, the target rank regularizes</h2>
+  <img src="../thesis/figures_png/reconstruction_noisy_problem.png" alt="Noisy problem II reconstructions for k = 20, 60, 150">
+  <p class="caption">Problem II with noise, \(\lambda\) from the discrepancy principle, \(k = 20, 60, 150\).</p>
+  <p>Too large \(k\) lets noise in at the boundary. The best \(k\) is close to the best truncation rank of truncated SVD, with comparable error.</p>
+</section>
+
+<!-- 11 -->
+<section class="dark" data-background-color="#1C1E3A">
+  <p class="eyebrow">Contribution 2</p>
+  <h2 style="font-size:72px">DLRA-CG</h2>
+</section>
+
+<!-- 12 -->
+<section>
+  <p class="eyebrow">The idea</p>
+  <h2>Sparse sources are low-rank matrices</h2>
+  <img src="../thesis/figures_png/low_rank_source.png" alt="A square source as one outer product" style="max-height:380px">
+  <p>Reshape \(x\) into an \(n\times n\) matrix \(X\). One square source is rank 1, problem II is rank 3. Search only over \(X = U\Sigma V^\top\) with \(r \ll n\).</p>
+</section>
+
+<!-- 13 -->
+<section>
+  <p class="eyebrow">Method</p>
+  <h2>DLRA step with conjugate-gradient directions</h2>
+  <div class="cols">
+    <img src="../thesis/figures_png/low_rank_manifold.png" alt="Rank-r manifold with tangent plane" style="flex:0 0 440px; max-width:440px">
+    <div>
+      <p>DLRA (Schotthöfer et al.) updates \(U\), \(V\), \(\Sigma\) along a direction \(D\), then truncates to rank \(r\). With steepest descent or Adam it needs \(\sim 10^4\) iterations.</p>
+      <p>\(\Phi\) is quadratic with SPD Hessian \(H\), so take \(D\) from CG:</p>
+      <div class="eq">\[\alpha = \frac{\|G\|^2}{\langle D, HD\rangle},\qquad D \leftarrow -G + \beta D\]</div>
+      <p><b>Restarts</b> every \(N_r\) steps recompute the true gradient and stop drift. <b>DLRA-PCG</b> adds a preconditioner.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 14 -->
+<section>
+  <p class="eyebrow">Result: speed</p>
+  <h2>Far fewer iterations than DLRA</h2>
+  <div class="cols">
+    <div style="flex:2">
+      <img src="../thesis/figures_png/number_of_iterations.png" alt="Relative error per iteration for DLRA step rules and DLRA-CG">
+      <p class="caption">Problem I, rank 1. Right: effect of the restart period \(N_r\).</p>
+    </div>
+    <div>
+      <p class="big">≈210×</p>
+      <p>fewer iterations than DLRA with steepest descent to reach error 0.85 (100 vs 20,916), at similar cost per iteration.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 15 -->
+<section>
+  <p class="eyebrow">Result: quality</p>
+  <h2>Low-rank solutions separate the sources</h2>
+  <div class="cols">
+    <div style="flex:1.6">
+      <img src="../thesis/figures_png/low_rank_restarted_CG.png" alt="Restarted DLRA-CG reconstructions for problems I and II">
+      <p class="caption">Restarted DLRA-CG, \(N_r = 10\). White boxes: true sources.</p>
+    </div>
+    <table>
+      <tr><th>Peak amplitude</th><th>I</th><th>II</th></tr>
+      <tr><td>Weighted Tikhonov</td><td>0.26</td><td>0.48</td></tr>
+      <tr><td>DLRA-CG</td><td>0.28</td><td>0.64</td></tr>
+      <tr class="hl"><td>Restarted</td><td>0.40</td><td>0.80</td></tr>
+    </table>
+  </div>
+  <p>True amplitude is 1. Lower reconstruction error than full-rank weighted Tikhonov.</p>
+</section>
+
+<!-- 16 -->
+<section>
+  <p class="eyebrow">Result: the rank</p>
+  <h2>The rank acts as a regularization parameter</h2>
+  <img src="../thesis/figures_png/low_rank_different_r_II.png" alt="DLRA-CG on problem II at rank 1, 2 and 5">
+  <div class="cols top">
+    <p><b>Too small</b> (\(r=1\)): a spurious fourth source.</p>
+    <p><b>Best</b> (\(r=2\)), although the true rank is 3.</p>
+    <p><b>Too large</b> (\(r=5\)): looks like full-rank Tikhonov.</p>
+  </div>
+</section>
+
+<!-- 17 -->
+<section>
+  <p class="eyebrow">Result: preconditioning</p>
+  <h2>DLRA-PCG: faster, but at a cost in error</h2>
+  <div class="cols">
+    <div style="flex:1.6">
+      <img src="../thesis/figures_png/number_of_iterations_preconditioners.png" alt="Convergence with different preconditioners">
+      <p class="caption">Left: no restarts. Right: restart every 10 steps.</p>
+    </div>
+    <div>
+      <p>Preconditioning converges much faster but raises the final error.</p>
+      <p>Restarts partly recover it; IC + restarts is the best combination.</p>
+      <p>IC + Woodbury with restarts is unstable.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 18 -->
+<section data-background-color="#ECEAE3">
+  <p class="eyebrow">Conclusion</p>
+  <h2>Limitations</h2>
+  <div class="grid2">
+    <div class="card"><h3>rSVD: narrow tests</h3><p>One elliptic PDE, 2D geometries, square sources. Slow spectral decay needs larger \(k\). The \(K^*\) variant gave mixed results.</p></div>
+    <div class="card"><h3>Rank choice</h3><p>DLRA-CG is sensitive to \(r\): too small is wrong, slightly too large looks full-rank.</p></div>
+    <div class="card"><h3>Semi-convergence</h3><p>Without restarts it is unclear when to stop; with restarts \(N_r\) must be tuned.</p></div>
+    <div class="card"><h3>Preconditioning</h3><p>Iterates drift to non-optimal solutions, worse for preconditioners close to \(H\).</p></div>
+  </div>
+</section>
+
+<!-- 19 -->
+<section>
+  <p class="eyebrow">Conclusion</p>
+  <h2>Future work</h2>
+  <div class="cols top">
+    <div class="card">
+      <h3>rSVD</h3>
+      <ul>
+        <li>Other PDEs, 3D domains, other sources and geometries</li>
+        <li>Power iteration for slow spectral decay</li>
+        <li>Adaptive rank from a tolerance</li>
+      </ul>
+    </div>
+    <div class="card hl">
+      <h3>DLRA-CG</h3>
+      <ul>
+        <li>Rank-adaptive variant (Schotthöfer et al.)</li>
+        <li>Stopping rules: discrepancy principle, L-curve</li>
+        <li><b>Convergence theory</b>, incl. preconditioning</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 20 -->
+<section class="dark" data-background-color="#1C1E3A">
+  <p class="eyebrow">Takeaway</p>
+  <h2 style="font-size:64px">Efficient low-rank methods make large-scale sparse source identification possible</h2>
+  <ul style="font-size:32px;color:#E4E1EE">
+    <li>Matrix-free rSVD: weighted Tikhonov without forming \(K\)</li>
+    <li>DLRA-CG: sparse, well-separated sources, ≈210× faster than DLRA</li>
+  </ul>
+</section>
+
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/math/math.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.min.js"></script>
+<script>
+  Reveal.initialize({
+    width: 1600, height: 900, margin: 0.06,
+    hash: true, slideNumber: 'c', transition: 'fade', center: false,
+    plugins: [RevealMath.KaTeX, RevealNotes]
+  });
+
+  // Laser pointer: press L to toggle; a red dot follows the mouse.
+  const laser = document.createElement('div');
+  laser.style.cssText = 'position:fixed;width:22px;height:22px;margin:-9px 0 0 -9px;border-radius:50%;' +
+    'background:#22e05a;box-shadow:0 0 12px 4px rgba(34,224,90,.6);pointer-events:none;z-index:9999;display:none';
+  document.body.appendChild(laser);
+  document.addEventListener('mousemove', e => { laser.style.left = e.clientX + 'px'; laser.style.top = e.clientY + 'px'; });
+  Reveal.addKeyBinding({ keyCode: 76, key: 'L', description: 'Toggle laser pointer' }, () => {
+    const on = laser.style.display === 'none';
+    laser.style.display = on ? 'block' : 'none';
+    document.body.style.cursor = on ? 'none' : '';
+  });
+</script>
+</body>
+</html>
