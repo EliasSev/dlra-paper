@@ -2,7 +2,7 @@ from dlra.problem import TestProblemSetup, TestProblem, ForwardOperator
 from dlra.evaluation import error3, error_ssim, error_auc_iou
 from dlra.viz import save_plot
 from dlra.solvers import (
-    ConjugateGradient,
+    ConjugateGradient, DirectSolver,
     DynamicalLowRankApproximation, DynamicalLowRankCG, DynamicalLowRankPCG
 )
 
@@ -12,7 +12,7 @@ from dlra.solvers import (
 
 __all__ = [
     "TestProblemSetup", "TestProblem", "ForwardOperator",
-    "ConjugateGradient",
+    "ConjugateGradient", "DirectSolver",
     "DynamicalLowRankApproximation", "DynamicalLowRankCG", "DynamicalLowRankPCG",
     "error3", "error_ssim", "error_auc_iou",
     "save_plot",
