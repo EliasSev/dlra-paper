@@ -36,9 +36,7 @@ src/dlra/
 └── io.py
 ```
 
-- **`dlra/solvers/`** — the paper's contribution: DLRA, DLRA-CG, DLRA-PCG,
-  and the baselines (full-rank CG, Riemannian CG, DLRA-SD) used to validate
-  them, plus the Hessian preconditioners.
+- **`dlra/solvers/`** — the paper's contribution and baseline solvers: DLRA, DLRA-CG, DLRA-PCG, and standard CG.
 - **`dlra/problem/`** — the inverse problem itself: FE assembly of the
   forward operator (`fem.py`), different test problems
   (`test_problems.py`), and mesh/source generation (`meshes.py`,
@@ -46,8 +44,7 @@ src/dlra/
 - **`dlra/evaluation/`** — reconstruction metrics (Euclidean, EMD,
   thresholded IoU/AUC, SSIM).
 - **`dlra/viz/`** — plotting helpers and the paper's color scheme.
-- **`dlra/io.py`** — a progress bar and a disk-cache decorator for
-  expensive experiment results.
+- **`dlra/io.py`** — a progress bar and a disk-cache decorator.
 - **`dlra/rsvd.py`** — a matrix-free randomized SVD, copied over from the thesis, but not the focus of this project.
 
 See [`docs/PROBLEM_SETUP.md`](docs/PROBLEM_SETUP.md) for the mathematical
@@ -80,6 +77,4 @@ f.vector()[:] = x_hat
 plot(f)
 ```
 
-`x_hat` is the reconstructed source as a flat FE coefficient vector; see
-`notebooks/01_test.ipynb` and `notebooks/02_dlra_cg_test.ipynb` for full
-examples, including plotting and comparisons against other solvers.
+`x_hat` is the reconstructed source as a flat FE coefficient vector.
