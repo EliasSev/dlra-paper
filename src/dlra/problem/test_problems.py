@@ -96,6 +96,25 @@ PROBLEM_REGISTRY: dict[str, ProblemSpec] = {
             {"kind": "square", "x0": 1.55, "y0": 0.55, "w": 0.25, "h": 0.25},
         ],
     ),
+    "IV": ProblemSpec(
+        mesh_factory=get_square_mesh,
+        sources=[
+            {"kind": "square", "x0": 0.12, "y0": 0.55, "w": 0.12, "h": 0.12},
+            {"kind": "square", "x0": 0.63, "y0": 0.13, "w": 0.12, "h": 0.12},
+            {"kind": "square", "x0": 0.40, "y0": 0.74, "w": 0.12, "h": 0.12},
+            {"kind": "square", "x0": 0.78, "y0": 0.50, "w": 0.12, "h": 0.12},
+        ],
+    ),
+    "V": ProblemSpec(
+        mesh_factory=get_square_mesh,
+        sources=[
+            {"kind": "square", "x0": 0.14, "y0": 0.20, "w": .05, "h": .05},
+            {"kind": "square", "x0": 0.55, "y0": 0.12, "w": .05, "h": .05},
+            {"kind": "square", "x0": 0.13, "y0": 0.66, "w": .05, "h": .05},
+            {"kind": "square", "x0": 0.72, "y0": 0.44, "w": .05, "h": .05},
+            {"kind": "square", "x0": 0.47, "y0": 0.75, "w": .05, "h": .05},
+        ],
+    ),
 }
 
 
