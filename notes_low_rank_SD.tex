@@ -1,0 +1,206 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+
+\geometry{margin=2.5cm}
+
+\newtheorem{remark}{Remark}
+\newtheorem{proposition}{Proposition}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\cL}{\mathcal{L}}
+\newcommand{\cG}{\mathcal{G}}
+\newcommand{\cD}{\mathcal{D}}
+\newcommand{\cH}{\mathcal{H}}
+\newcommand{\cM}{\mathcal{M}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\SVD}{\operatorname{SVD}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\inner}[2]{\langle #1,\, #2 \rangle}
+
+\title{Riemannian Steepest Descent on the Fixed-Rank Matrix Manifold\\
+\large Derivation and Algorithm}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+% -----------------------------------------------------------------------
+\section{Problem Statement}
+
+Let $n, r \in \mathbb{N}$ with $r \ll n$. We consider the problem of finding a
+rank-$r$ matrix $X \in \R^{n \times n}$ that satisfies the generalized
+Sylvester-like equation
+\begin{equation}\label{eq:original}
+    \cL[X] := A_1 X + X A_2 + A_3 X A_4 \;=\; Y,
+\end{equation}
+where $A_i \in \R^{n \times n}$ are given matrices and $\mathcal{L}$ is self-adjoint. We enforce the
+rank constraint via the parametrization
+\begin{equation}\label{eq:factorization}
+    X = U S V^\top, \qquad U, V \in \R^{n \times r},\quad
+    U^\top U = V^\top V = I_r,\quad S \in \R^{r \times r},
+\end{equation}
+with $U$ and $V$ having orthonormal columns. The constraint set is the \emph{fixed-rank manifold}
+\begin{equation}
+    \cM_r \;=\; \bigl\{X \in \R^{n \times n} : \operatorname{rank}(X) = r\bigr\}.
+\end{equation}
+
+Equation~\eqref{eq:original} is rewritten as the condition that the
+\emph{defect operator}
+\begin{equation}\label{eq:operator}
+    \cG[X] \;=\; A_1X + XA_2 + A_3 X A_4 - Y
+\end{equation}
+vanishes. Because we restrict to $\cM_r$, we cannot enforce $\cG[X] = 0$
+in the ambient space; instead we impose the \emph{projected} condition
+\begin{equation}\label{eq:projected}
+    P(X)\,\cG[X] \;=\; 0,
+\end{equation}
+where $P(X)$ is the orthogonal projector onto the tangent space of $\cM_r$
+at $X$, given as
+\begin{align*}
+    P(X)\,Z \;=\; U U^\top Z (I - V V^\top) + Z V V^\top\,.
+\end{align*}
+Equation \eqref{eq:projected} is the first-order optimality condition of the quadratic cost
+\begin{equation}\label{eq:cost}
+    \Phi(X) \;=\; \tfrac{1}{2}\,\inner{\cL[X] - Y}{X}
+\end{equation}
+under the constraint $X\in\mathcal{M}_r$ where $\|\cdot\|_F$ denotes the Frobenius norm and
+$\inner{A}{B} = \tr(A^\top B)$ is the associated inner product. We assume that the Hessian of $\Phi$ is \emph{symmetric positive definite
+(SPD)} as a linear operator on $\R^{n \times n}$.
+
+% -----------------------------------------------------------------------
+\section{DLRT with Exact Line Search}
+
+We minimize $\Phi$ restricted to $\cM_r$ using Riemannian steepest
+descent.  The Riemannian gradient at $X_k \in \cM_r$ is the tangent vector
+obtained by projecting the Euclidean gradient onto $T_{X_k}\cM_r$:
+\begin{equation}
+    \operatorname{grad}_{\cM_r}\Phi(X_k) \;=\; P(X_k)\,\nabla\Phi(X_k)
+    \;=\; P(X_k)\,\cG[X_k].
+\end{equation}
+Steepest descent moves in the direction of the negative Riemannian gradient.
+
+\subsection{Step 1 — Residual (Riemannian Gradient)}
+
+Define the \emph{residual} as the negative Riemannian gradient:
+\begin{equation}\label{eq:residual}
+    \boxed{R_k \;=\; -P(X_k)\,\cG[X_k].}
+\end{equation}
+By construction $R_k \in T_{X_k}\cM_r$.  The Frobenius norm $\|R_k\|_F$
+measures how far $X_k$ is from satisfying the projected equation and
+serves directly as the convergence criterion.
+
+\subsection{Step 2 — Search Direction}
+
+The steepest-descent direction in the Riemannian sense is
+\begin{equation}\label{eq:direction}
+    \boxed{D_k \;=\; R_k.}
+\end{equation}
+Since $R_k \in T_{X_k}\cM_r$, the direction is already a valid tangent
+vector and requires no further projection.
+
+\subsection{Step 3 — Optimal Step Size (Exact Line Search)}
+
+We perform an exact line search along the tangent direction $D_k$, i.e.\ we
+minimize the restriction of $\Phi$ to the curve $\alpha \mapsto X_k + \alpha D_k$
+(before retraction).  Since $\Phi$ is quadratic, this one-dimensional
+problem has the closed-form minimizer
+\begin{equation}\label{eq:stepsize-derivation}
+    \frac{d}{d\alpha}\Phi(X_k + \alpha D_k)\Big|_{\alpha=\alpha_k}
+    = \inner{\nabla\Phi(X_k + \alpha_k D_k)}{D_k}
+    = \inner{\cG[X_k] + \alpha_k \cL[D_k]}{D_k}
+    = 0.
+\end{equation}
+Solving for $\alpha_k$ while using $D_k = R_k = -P(X_k)\cG[X_k]$ and $\langle \cG[X_k], D_k \rangle = \langle \cG[X_k], P(X_k)D_k \rangle=\langle P(X_k)\cG[X_k], D_k \rangle$ gives
+\begin{align}
+    \alpha_k = -\frac{\inner{\cG[X_k]}{D_k}}{\inner{\cL[D_k]}{D_k}} = -\frac{\inner{P(X_k)\cG[X_k]}{D_k}}{\inner{\cL[D_k]}{D_k}} = \frac{\inner{R_k}{R_k}}{\inner{\cL[D_k]}{D_k}}\,.
+\end{align}
+
+\subsection{Step 4 — Retraction onto $\cM_r$}
+
+The updated point $X_k + \alpha_k D_k$ generally has rank up to $2r$ and
+therefore lies \emph{off} the manifold $\cM_r$.  We map it back via the
+\emph{rank-$r$ truncated SVD retraction}. This can be done with a DLRT update.
+
+
+% -----------------------------------------------------------------------
+\section{Complete Algorithm}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{ll}
+\toprule
+\textbf{Input}  & Initial guess $X_0 = U_0 S_0 V_0^\top \in \cM_r$,
+                  tolerance $\varepsilon > 0$. \\
+\textbf{Output} & Approximate solution $X_k \in \cM_r$ with
+                  $\|R_k\|_F \le \varepsilon$. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+\noindent For $k = 0, 1, 2, \ldots$:
+
+\begin{enumerate}
+    \item \textbf{Define the gradient:}
+    \[
+        \cG[X_k] = A_1X_k + X_kA_2
+                   + A_3 X_k A_4 - Y
+    \]
+    and \textbf{compute the projected residual / Riemannian gradient:}
+    \[
+        R_k = -\Bigl[U_k U_k^\top \cG[X_k](I{-}V_k V_k^\top)
+              + \cG[X_k]\,V_k V_k^\top\Bigr].
+    \]
+    The residual lies in the tangent space, so it can be stored as the three factors $ U_k^\top\mathcal{L}[X_k]$, $\mathcal{L}[X_k]V_k $, and $U_k^\top\mathcal{L}[X_k]V_k$, which we can compute efficiently.
+
+    \item \textbf{Check convergence:} if $\|R_k\|_F^2 = \| U_k^\top\mathcal{G}[X_k]\|_F^2 + \| \mathcal{G}[X_k]V_k\|_F^2 - \| U_k^\top\mathcal{G}[X_k]V_k \|_F^2 \le \varepsilon$, stop.
+
+    \item \textbf{Set search direction:} $D_k = R_k$.
+
+    \item \textbf{Define the Hessian on the direction:}
+    \[
+        \cH[D_k] := \cL[D_k] = A_1D_k + D_kA_2
+                   + A_3 D_k A_4
+    \]
+    and \textbf{compute the projected Hessian:}
+    \begin{align*}
+        P(X_k)\cH[D_k] =\,& U_k U_k^\top \cH[D_k](I{-}V_k V_k^\top)
+                   + \cH[D_k]\,V_k V_k^\top\\
+                   =\,& U_k U_k^\top \cH[D_k]
+                   + (I{-}U_k U_k^\top)\cH[D_k]\,V_k V_k^\top
+    \end{align*}
+    The projected Hessian lies in the tangent space, so it can be stored efficiently through the three factors $U_k^\top\cH[D_k]$, $\cH[D_k]V_k$, and $U_k^\top\cH[D_k]V_k $.
+
+    \item \textbf{Compute the optimal step size:}
+    \begin{align*}
+        \alpha_k =\,& \frac{\|R_k\|_F^2}{\langle P(X_k)D_k,\cH[D_k]\rangle}\\
+        =\,& \frac{\| U_k^\top\mathcal{G}[X_k]\|_F^2 + \| \mathcal{G}[X_k]V_k\|_F^2 - \| U_k^\top\mathcal{G}[X_k]V_k \|_F^2}{\langle D_k,P(X_k)\cH[D_k]\rangle}
+    \end{align*}
+    which can be computed efficiently with
+    \begin{align*}
+        \langle D_k,P(X_k)\cH[D_k]\rangle =\,& \langle -\Bigl[U_k U_k^\top \cG[X_k](I{-}V_k V_k^\top)
+              + \cG[X_k]\,V_k V_k^\top\Bigr],P(X_k)\cH[D_k]\rangle \\
+              =\,& -\langle U_k U_k^\top \cG[X_k](I{-}V_k V_k^\top),P(X_k)\cH[D_k]\rangle - \langle \cG[X_k]\,V_k V_k^\top,P(X_k)\cH[D_k]\rangle \\
+              =\,& -\langle U_k^\top \cG[X_k](I{-}V_k V_k^\top),U_k^\top \cH[D_k]\rangle - \langle \cG[X_k]\,V_k ,\cH[D_k]\,V_k \rangle \\
+              =\,& -\langle U_k^\top \cG[X_k],U_k^\top \cH[D_k]\rangle + \langle U_k^\top \cG[X_k]V_k,U_k^\top \cH[D_k]V_k\rangle- \langle \cG[X_k]\,V_k ,\cH[D_k]\,V_k \rangle
+    \end{align*}
+
+    \item \textbf{Dynamical low-rank update:}
+    \begin{alignat*}{2}
+        K_{k+1} =\,& U_kS_k - \alpha_k \mathcal{G}[X_k]V_k\,, \quad &&\widehat U = \textrm{orth}(K_{k+1})\\
+        L_{k+1} =\,& V_kS_k^{\top} - \alpha_k (U_k^{\top}\mathcal{G}[X_k])^{\top}\,, \quad &&\widehat V = \textrm{orth}(L_{k+1})\\
+        \widehat S =\,& (\widehat U^{\top}U_k)S_k(V_k^{\top}\widehat V) - \alpha_k \widehat U^{\top}\mathcal{G}[X_k]\widehat V.
+    \end{alignat*}
+    Extract $U_{k+1}, S_{k+1}, V_{k+1}$ from the truncated SVD.
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,65 @@
+\begin{algorithm}
+\caption{Riemannian CG on $\mathcal{M}_r$ (factored, no $n\times n$ objects)}
+\label{alg:RCG}
+\begin{algorithmic}[1]
+
+\Require Structured Hessian oracles $\texttt{HmulV}(A;V)\!=\!\operatorname{mat}(H\mathrm{vec}A)V$,
+         $\texttt{HmulU}(A;U)\!=\!\operatorname{mat}(H\mathrm{vec}A)^TU$,
+         $\texttt{qform}(A)\!=\!\langle A, \operatorname{mat}(H\mathrm{vec}A)\rangle_F$;
+         compressed data term $B = U_b\Sigma_b V_b^T$;
+         initial $X^{(0)} = U_x\Sigma_x V_x^T$; rank $r$; restart period $p$
+
+\Ensure Rank-$r$ approximate minimizer $X = U_x\Sigma_x V_x^T$
+
+\State \textbf{function} $\texttt{RiemGrad}(U_x,\Sigma_x,V_x)$:
+\State \quad $Z_v \gets \texttt{HmulV}(X; V_x) - U_b\Sigma_b(V_b^TV_x)$
+       \Comment{$= G V_x$, thin $n\times r$}
+\State \quad $Z_u \gets \texttt{HmulU}(X; U_x) - V_b\Sigma_b^T(U_b^TU_x)$
+       \Comment{$= G^T U_x$}
+\State \quad $M \gets U_x^T Z_v$;\; $U_p \gets Z_v - U_xM$;\; $V_p \gets Z_u - V_xM^T$
+\State \quad \Return $\xi = (M, U_p, V_p)$
+
+\State $\xi \gets \texttt{RiemGrad}(U_x,\Sigma_x,V_x)$;\quad
+       $\eta \gets -\xi$;\quad $g \gets \|\xi\|_F^2$
+       \Comment{$\|\xi\|_F^2 = \|M\|_F^2+\|U_p\|_F^2+\|V_p\|_F^2$}
+
+\For{$i = 0,1,2,\dots,\text{max\_iter}$}
+
+    \State \textbf{Step size (exact quadratic line search):}
+    \State $A_\eta \gets [U_x, U_{p,\eta}]
+            \left[\begin{smallmatrix} M_\eta & I \\ I & 0 \end{smallmatrix}\right]
+            [V_x, V_{p,\eta}]^T$ \Comment{rank-$2r$ factors only, never formed dense}
+    \State $\alpha \gets -\langle \xi, \eta\rangle_F \,/\, \texttt{qform}(A_\eta)$
+
+    \State \textbf{Retraction:}
+    \State $(Q_u,R_u) \gets \mathrm{qr}(U_{p,\eta})$;\quad $(Q_v,R_v) \gets \mathrm{qr}(V_{p,\eta})$
+    \State $\hat U \gets [U_x, Q_u]$;\quad $\hat V \gets [V_x, Q_v]$;\quad
+           $\hat\Sigma \gets \left[\begin{smallmatrix}
+           \Sigma_x + \alpha M_\eta & \alpha R_v^T \\ \alpha R_u & 0
+           \end{smallmatrix}\right]$
+    \State $(U_x^+,\Sigma_x^+,V_x^+) \gets \operatorname{truncate}_r(\hat U,\hat\Sigma,\hat V)$
+
+    \State \textbf{New Riemannian gradient (always at the true iterate):}
+    \State $\xi^+ \gets \texttt{RiemGrad}(U_x^+,\Sigma_x^+,V_x^+)$;\quad
+           $g^+ \gets \|\xi^+\|_F^2$
+    \State \textbf{if} $\sqrt{g^+} < \texttt{tol}$ \textbf{stop}
+
+    \State \textbf{Transport old direction} ($\eta$ has rank-$2r$ factors $A_\eta$):
+    \State $\tilde\eta \gets \mathcal{P}_{X^+}(A_\eta)$
+           \Comment{via $A_\eta V_x^+$, $A_\eta^T U_x^+$ — thin products}
+
+    \State \textbf{Conjugacy coefficient (PR+, with FR as fallback):}
+    \State $\tilde\xi \gets \mathcal{P}_{X^+}(\,\xi\ \text{in its rank-}2r\ \text{factors}\,)$
+    \State $\beta \gets \max\!\big(0,\; \langle \xi^+,\, \xi^+ - \tilde\xi\rangle_F \,/\, g\big)$
+
+    \State \textbf{New direction:} $\eta^+ \gets -\xi^+ + \beta\,\tilde\eta$
+           \Comment{componentwise on $(M,U_p,V_p)$: same tangent space}
+    \State \textbf{if} $\langle \xi^+, \eta^+\rangle_F \ge 0$ \textbf{ or } $i \bmod p = 0$:
+           \; $\eta^+ \gets -\xi^+$ \Comment{descent guard / periodic restart}
+
+    \State $(U_x,\Sigma_x,V_x,\ \xi,\ \eta,\ g) \gets (U_x^+,\Sigma_x^+,V_x^+,\ \xi^+,\ \eta^+,\ g^+)$
+
+\EndFor
+
+\end{algorithmic}
+\end{algorithm}
