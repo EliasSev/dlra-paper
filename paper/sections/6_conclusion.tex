@@ -1,0 +1,197 @@
+\section{Conclusions}
+\label{sec:conclusions}
+
+% Source: thesis/sections/6_discussion.tex and 7_conclusion.tex
+%\section{Discussion}\label{sec:discussion}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Matrix-free Randomized SVD Part 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Matrix-free rSVD}
+\subsubsection{Asymptotic analysis}
+To explain the computational times and asymptotic behavior in Sections~\ref{sec:computational_time} and \ref{sec:computational_breakdown}, we examine the cost of forming $K$ and of Algorithm~\ref{alg:discrete_rsvd} in more detail. Standard dense SVD and QR costs throughout this and the following section follow \cite{golubMatrixComputations4th2013}.
+
+For a 2D elliptic problem, the Cholesky factorization of $A_h$ and $M_\partial$ can be done in $\mathcal{O}(N^{3/2})$ and $\mathcal{O}(N_b^{3/2})$ computations, respectively (Section~\ref{sec:initial_matrix_factorizations}). The resulting triangular systems can be solved at the respective costs $\mathcal{O}(N \log N)$ and $\mathcal{O}(N_b \log N_b)$. Since $N_b \ll N$, we may disregard the factorization and triangular solves using $M_\partial$. 
+
+The cost of computing $K = T A_h^{-1} M$ involves solving $N_b$ linear systems $A_h v_i = T^T e_i$ (Section~\ref{sec:approximating}), each system costing $\mathcal{O}(N \log N)$ using a sparse Cholesky factorization of $A_h$. With $N_b \sim \sqrt{N}$, the cost therefore scales as $\mathcal{O}(N^{3/2} \log N)$, explaining the scaling of $t_K$ observed in the left panel of Figure~\ref{fig:rsvd_computational_time_comp}. The SVD of dense matrix $K \in \mathbb{R}^{N_b \times N}$ costs $\mathcal{O}(N_b^2 N) = \mathcal{O}(N^2)$, which is larger than $\mathcal{O}(N^{3/2} \log N)$, explaining $t_{\text{SVD}}$ in Figure~\ref{fig:rsvd_computational_time_comp}.
+
+For the matrix-free rSVD (Algorithm~\ref{alg:discrete_rsvd}), factorizing $A_h$ costs $\mathcal{O}(N^{3/2})$, and is done once. Each application of $K$ and $K^*$ costs $\mathcal{O}(N \log N)$, totaling $\mathcal{O}(l N \log N)$. The SVD of the $l \times N$ matrix $B$ costs $\mathcal{O}(l^2 N)$, and the cost of the QR factorization of the small $N_b \times l$ matrix $Y$ is $\mathcal{O}(l^2 N_b)$, and may be disregarded. Hence, assuming two dimensions and an efficient sparse Cholesky factorization of $A_h$, Algorithm~\ref{alg:discrete_rsvd} costs
+\begin{equation}\label{eq:rsvd_cost}
+    \underbrace{\mathcal{O}(N^{3/2})}_{\text{setup}}
+    + \underbrace{\mathcal{O}(l N \log N)}_{\substack{\text{forward and} \\ \text{adjoint solves}}}
+    + \underbrace{\mathcal{O}(l^2 N)}_{\text{SVD of } B}.
+\end{equation}
+
+This is consistent with the results in the right panel of Figure~\ref{fig:rsvd_computational_time_comp}: $t_{\text{rSVD}}$ scales near-linearly on the observed range, matching the near-linear scaling of $\mathcal{O}(N \log N)$. Within the observed range, the $\mathcal{O}(lN\log N)$ solve cost dominates the one-time $\mathcal{O}(N^{3/2})$ setup (Figure~\ref{fig:rsvd_computational_breakdown}), and $N\log N$ is close enough to linear that $t_{\text{rSVD}}$ in Figure~\ref{fig:rsvd_computational_time_comp} appears near-linear.
+
+Equation~\eqref{eq:rsvd_cost} also explains the cost breakdown in Figure~\ref{fig:rsvd_computational_breakdown}. For larger $k$, a larger share is taken up by the SVD stage, as predicted by $\mathcal{O}(l^2 N)$. For $k = 200$ ($l = k + p$), the largest considered target rank, we observed that as $N$ increases, the forward and adjoint solves start taking up a larger share of the time compared to the SVD of $B$, also consistent with Equation~\eqref{eq:rsvd_cost}. The cost $\mathcal{O}(l^2 N_b)$ of the QR-factorization $QR = Y$ is negligible, matching the results for all $k$ and $N$.
+
+
+\subsubsection{Overhead of the adjoint formulation}
+The adjoint formulation of Algorithm~\ref{alg:discrete_rsvd_Kstar} has some computational overhead compared to Algorithm~\ref{alg:discrete_rsvd}. The setup stage requires an additional Cholesky factorization of the $N \times N$ matrix $M$, which costs $\mathcal{O}(N^{3/2})$. For the QR factorization, $Y$ is now $N \times l$, so this costs $\mathcal{O}(l^2 N)$, compared to $\mathcal{O}(l^2 \sqrt{N})$ for rSVD on $K$. Computing $B = Q^T K^*$ requires solving $M \tilde q_i = q_i$ $l$ times, costing $\mathcal{O}(l N \log N)$ (compared to $\mathcal{O}(l \sqrt{N} \log \sqrt{N})$, which was negligible). The SVD of $B \in \mathbb{R}^{l \times N_b}$ costs $\mathcal{O}(l^2 \sqrt{N})$, which is cheaper than $\mathcal{O}(l^2 N)$ for rSVD on $K$. Overall, the asymptotic cost of Algorithm~\ref{alg:discrete_rsvd_Kstar} is the same as Algorithm~\ref{alg:discrete_rsvd}, which is given in Equation~\eqref{eq:rsvd_cost}.
+
+In Table~\ref{tab:computational_time_adjoint} ($t_1/t$), we see approximately 30\% computational overhead for $k = 10$, 20\% for $k = 50$, and 10\% for $k = 200$. This matches the theoretical overhead, which reduces for larger $k$ when the cost $\mathcal{O}(l^2 N)$ of the SVD in Algorithm~\ref{alg:discrete_rsvd} takes up a larger share.
+
+To recover the SVD of $K$ from the SVD of $K^*$ (Section~\ref{sec:reconvering_the_svd}), forming $A = M_\partial^{-1} \bar V$ involves $k$ triangular solves with $M_\partial$ ($\mathcal{O}(k\sqrt{N}\log\sqrt{N})$), and forming $B = M\bar U$ is a sparse matrix-matrix product ($\mathcal{O}(kN)$): both are cheap and can be disregarded. Their respective QR factorizations add up to $\mathcal{O}(k^2 \sqrt{N}) + \mathcal{O}(k^2 N) = \mathcal{O}(k^2 N)$. The SVD of $R_A \bar \Sigma R_B^T \in \mathbb{R}^{k \times k}$ is $\mathcal{O}(k^3)$, which is negligible compared to $\mathcal{O}(k^2 N)$, since $k \ll N$.
+
+This is in correspondence with the reported computational overhead $t_2 / t$ in Table~\ref{tab:computational_time_adjoint}: as $k$ increases, the extra cost $\mathcal{O}(k^2 N)$ of the recovery procedure and the reduced cost $\mathcal{O}(l^2 \sqrt{N})$ of the SVD of $B$ balance out, leading to approximately 30\% extra computational time using rSVD on $K^*$ and recovery of the SVD, compared to the direct approach of rSVD on $K$.
+
+
+\subsubsection{Analysis of reconstruction error}\label{sec:analysis_of_reconstruction_error}
+At target rank $k = 50$, rSVD reconstruction errors were within 0.5\% to 4\% of the exact Tikhonov solution in Euclidean norm and AUC-IoU (4\% to 39\% in EMD), with visually indistinguishable reconstructions (Section~\ref{sec:target_rank_reconstruction}, Figure~\ref{fig:test_problems_selected}).
+
+To understand these results, we inspect the structure of $Y = K \Psi$. Following the setup of Halko et al. \cite[Sec.~9]{halkoFindingStructureRandomness2011}, let $K = U \Sigma V^T$ be the SVD of $K$, and partition $\Sigma$ as $\Sigma = \operatorname{diag}(\Sigma_1,\, \Sigma_2)$, where $\Sigma_1$ contains the $k$ first singular values of $K$, and $\Sigma_2$ the remainder. Correspondingly, partition the right singular vectors as $V = [V_1\,\, V_2]$, and write $K$ as
+\begin{equation}\label{eq:rsvd_partitioned_1}
+    K = U \begin{bmatrix}
+    \Sigma_1 & \\ & \Sigma_2
+    \end{bmatrix}
+    \begin{bmatrix}
+    V_1^T \\ V_2^T
+    \end{bmatrix}.
+\end{equation}
+Right-multiplying by $\Psi$ and setting $\Psi_1 = V_1^T \Psi$ and $\Psi_2 = V_2^T \Psi$ gives
+\begin{equation*}\label{eq:rsvd_partitioned_2}
+    Y = U \begin{bmatrix}
+    \Sigma_1 \Psi_1 \\
+    \Sigma_2 \Psi_2
+    \end{bmatrix}.
+\end{equation*}
+Here, $\Sigma_1 \Psi_1$ is the contribution from the $k$ dominant singular components we wish to recover, while $\Sigma_2 \Psi_2$ comes from the truncated tail and acts as a perturbation. By Theorem~10.5 in \cite{halkoFindingStructureRandomness2011}, if $\Psi \in \mathbb{R}^{N \times l}$ is a random Gaussian matrix, then
+\begin{equation}\label{eq:rsvd_error_bound}
+    \mathbb{E}\| K - K_k \|_F \le
+    \gamma_k \sqrt{\sum_{i = k+1}^{N_b} \sigma_i^2},
+\end{equation}
+where $\mathbb{E}$ denotes the expected value, $\gamma_k = \sqrt{1 + k / (p - 1)}$, and $K_k$ is the rank-$k$ approximation obtained from the rSVD (Algorithm~\ref{alg:discrete_rsvd} or \ref{alg:discrete_rsvd_Kstar}).
+
+When the singular values of $K$ decay rapidly, the perturbation $\Sigma_2 \Psi_2$ remains low and the sum in Equation~\eqref{eq:rsvd_error_bound} is small, resulting in a good rank-$k$ approximation. If the singular values decay more slowly, $\sum_{i=k+1}^{N_b} \sigma_i^2$ will be larger, and the expected error increases.
+
+Since $K$ has rapidly decaying singular values
+(Figure~\ref{fig:singular_values}), a target rank
+$k \ll \operatorname{rank}(K) = N_b$ yields an accurate rank-$k$
+approximation: the main actions of $K$ are captured in $\Sigma_1 \Psi_1$. This argument transfers to the weighted Tikhonov problem in Equation~\eqref{eq:discrete_inverse_problem}. Both $K$ and $W$ are approximated accurately at $k = 50$, keeping the reconstruction error within 4\% (Euclidean, AUC-IoU). Since the random sampling introduces some noise, the EMD shows a higher error, as it is more sensitive to low-amplitude noise.
+
+
+\subsubsection{Reconstruction error using the adjoint operator}
+\input{figures/true_singular_values.tex}
+Using rSVD on $K$ gives slightly lower reconstruction error than rSVD on $K^*$ (Section~\ref{sec:reconstruction_error_using_the_adjoint_operator}). The quality of the random sampling $Y = K\Psi$ versus $Y' = K^* \Psi'$ depends on the spectral decay of the operators. Figure~\ref{fig:true_singular_values} shows that the singular values of $K^*$ have a slower decay than those of $K$, and we therefore expect a higher approximation error by Equation~\eqref{eq:rsvd_error_bound}. The matrices $K$ and $K^T$ have the same singular values, so the difference originates in the mass matrix factors of the relation $K^* = M^{-1} K^T M_\partial$ (Equation~\eqref{eq:K_star_def}).
+
+
+\subsubsection{Effect of the test vector distribution}
+\input{figures/singular_vectors_of_K.tex}
+Some test vector distributions slightly reduce reconstruction error, with the Peak test vectors giving lower EMD than Gaussian or Rademacher (Section~\ref{sec:test_vector_distribution_effect_on_error}).
+
+Consider a single sample $y = K \psi = U \Sigma V^T \psi$. In the best case, $\psi = a v_1$ with $a \neq 0$: then $V^T(a v_1) = a e_1$, $K(a v_1) = a \sigma_1 u_1$, and the QR factorization gives $Q = u_1$. More generally, choosing $k$ linearly independent $\psi_i \in \operatorname{span}\{ v_1,\dots,v_k \}$ gives $\operatorname{range}(Q) = \operatorname{span}\{u_1,\dots,u_k\}$ and the rank-$k$ projection $QQ^T K$ recovers the exact rank-$k$ SVD of $K$.
+
+Figure~\ref{fig:singular_vectors_of_K} plots the first four right singular vectors of $K$. We see that they are smooth, more closely matching the Peak test vectors than the Gaussian or Rade\-macher test vectors, potentially explaining the small improvement in error.
+
+
+\subsubsection{Independence from mesh resolution}
+The reconstruction error is independent of the mesh resolution $N$ for fixed $k$ (Section~\ref{sec:mesh_resolution_effect_on_reconstruction_error}). The PDE solution at the boundary is smooth, so finer discretization produces more samples of the same smooth function without introducing new information about the source.
+
+The continuous forward operator $\mathcal{K}$ has rapidly decaying singular values (Section~\ref{sec:ill_posedness}), and the discrete $K$ inherits this decay. As $N$ increases and $\operatorname{rank}(K) = N_b$ grows, the additional singular values are small with little new information.
+
+The target rank $k$ can therefore be selected on a coarse mesh, where rSVD is inexpensive to run, and reused unchanged as the mesh is refined. This is a practical method for tuning $k$ when the final computation on a fine mesh is expensive.
+
+
+\subsubsection{Estimation of singular values}
+Let $\hat P = QQ^T$ with $Q$ produced by Algorithm~\ref{alg:discrete_rsvd}. This is an orthogonal projection onto $\operatorname{range}(Q)$, and $\hat P K$ is the projected matrix from which the rSVD approximation is obtained. The projector satisfies $\| \hat P z \| \le \| z \|$, meaning it shrinks vectors, so $\| \hat P K x  \| \le \|K x \|$ for every $x$. Consequently, $\hat P K$ stretches every vector at most as much as $K$ does, and singular values measure exactly this stretching. This is what we saw in Section~\ref{sec:approximation_of_singular_values}. By choosing a higher oversampling parameter $p$, $\operatorname{range}(Q)$ more closely matches $\operatorname{range}(K)$ (in particular, the $k$ first left singular vectors), and the underestimation reduces. Algorithm~\ref{alg:discrete_rsvd_Kstar} gave a worse approximation (Section~\ref{sec:reconstruction_error_using_the_adjoint_operator}), so the underestimation increases.
+
+The captured subspace $\operatorname{range}(Q)$ depends on the random test vectors $\psi_i$, and so does the degree of underestimation. This is an active area of research. Lemma~4.2 and Theorem~4.3 of Gu \cite{guSubspaceIterationRandomization2015} provide lower bounds for the power-iteration method, which reduces to the plain rSVD used in Algorithm~\ref{alg:discrete_rsvd} when $q = 0$.
+
+
+\subsubsection{Reconstructions under noisy data}
+Choosing $k$ too large worsens reconstruction quality on noisy data (Section~\ref{sec:accuracy_on_noisy_data}), and the target rank acts as a regularization parameter in the same manner as the truncation rank of tSVD.
+
+For a noisy measurement $\tilde y = y + \epsilon$, $y = K x$, we can write the minimum-norm least-squares solution as $x^* = K^+ \tilde y = K^+ y + K^+ \epsilon$ (Section~\ref{sec:the_pseudoinverse}). Expanding in terms of the SVD components,
+\begin{equation*}
+    x^* = \sum_{i=1}^{N_b}
+    \left(\frac{u_i^T y + u_i^T \epsilon}{\sigma_i}\right) v_i,
+\end{equation*}
+we see that the $i$-th component depends on the exact term $u_i^T y$ and the noise term $u_i^T \epsilon$. Components where $|u_i^T y| \le |u_i^T \epsilon|$ are dominated by noise, and the $\tfrac{1}{\sigma_i}$ factor amplifies this contribution. Assuming that the Picard condition \cite{hansen2010discrete} holds, $u_i^T y$ decays to zero as $i$ increases while $u_i^T \epsilon$ stays approximately constant, so for large $i$ every component is noise-dominated and amplified by a growing $\tfrac{1}{\sigma_i}$.
+
+By truncating the $N_b - k$ terms of the solution, we remove the noisy SVD components. We wish to choose $k$ such that $|u_k^T y| > |u_k^T \epsilon|$ while $|u_{k+1}^T y| < |u_{k+1}^T \epsilon|$, removing only the noise-dominated SVD components $k+1,\, k+2,\dots,\, N_b$.
+
+For the weighted Tikhonov solution, the reconstruction already has some regularization through $\lambda$, but the argument transfers. We found that the optimal $k$ values are approximately equal for both the rSVD and the tSVD. The rank is problem-dependent, and for our problems ranged from $k = 45$ to $k = 85$ by Euclidean norm. The EMD preferred a smaller $k$ ($20$ to $30$), since it is more sensitive to unwanted noise in the reconstruction, while the AUC-IoU generally preferred larger $k$ ($\ge 60$), since it focuses on segmentation overlap, which is less affected by noise.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Dynamical Low-Rank Approximation using Conjugate Gradient 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Dynamical low-rank approximation}
+\subsubsection{Convergence of DLRA-CG}\label{sec:convergence_of_DLRA_CG}
+Replacing the steepest descent search directions with directions $\{D^{(i)}\}$ from CG increased convergence significantly: DLRA-CG reached the relative error $e^{(i)} < 0.85$ approximately $210$ times faster than steepest descent (Section~\ref{sec:rate_of_convergence}).
+
+In an unconstrained setting, the convergence of CG and steepest descent depends on the condition number $\kappa = \kappa(H)$, with larger $\kappa$ leading to slower convergence \cite{saadIterativeMethodsSparse2003}. If $x^*$ is the unconstrained minimizer of $\Phi(x)$ and $x^{(i)}$ the $i$-th iterate of CG, then by Theorem~6.29 in Saad \cite{saadIterativeMethodsSparse2003},
+\begin{equation}\label{eq:convergence_of_CG}
+    \| x^* - x^{(i)} \|_H \le 2 \left(
+        \frac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1}
+    \right)^i
+    \| x^* - x^{(0)} \|_H.
+\end{equation}
+If $\kappa$ is large, then $\tfrac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1} \approx 1 - \tfrac{2}{\sqrt{\kappa}}$, compared to the slower convergence of steepest descent which converges as approximately $1 - \tfrac{2}{\kappa}$ \cite{saadIterativeMethodsSparse2003}.
+
+The Hessian $H = F + S$ has a low-rank $F = K^T M_\partial K$ plus a sparse $S = \lambda^2 W^T M W$ structure (Section~\ref{sec:choice_of_preconditioner}). The rapid decay of singular values of $K$ makes $\kappa(H)$ depend on $\lambda$: the small eigenvalues of $H$ are mostly determined by $S$, whose eigenvalues are small when $\lambda$ is small. For example, at $\lambda = 0.1$, $\kappa(H) \approx 10^3$, and at  $\lambda = 10^{-4}$, $\kappa(H) \approx 10^9$.
+
+The same argument partially transfers to DLRA-CG, as demonstrated by Table~\ref{tab:convergence_iterations}, since $\{D^{(i)}\}$ is generated by the same CG recurrence as in the unconstrained case. A formal convergence analysis of DLRA-CG that accounts for the projection and truncation remains an open problem.
+
+
+\subsubsection{Semi-convergence and restarting}
+\input{figures/cg_direction_disagreement}
+DLRA-CG shows semi-convergence: initially the relative error reduces, and then it rises again before stalling (Section~\ref{sec:rate_of_convergence}). Restarted DLRA-CG avoids this, but shows slower convergence.
+
+As discussed in Section~\ref{sec:restarted_cg}, the DLRA-CG algorithm constructs $(\alpha_i,\, G^{(i)},\, D^{(i)})$ independently of $X^{(i)}$. The search directions $\{D^{(i)}\}$ follow the trajectory of the full-rank solution $Y^{(i)}$, meaning $G^{(i)} = \nabla \Phi(Y^{(i)})$. When $i$ increases, $X^{(i)}$ and $Y^{(i)}$ may drift apart so that $G^{(i)}$ and the true gradient $\hat G^{(i)} = \nabla \Phi(X^{(i)})$ increasingly disagree. The projections of $D^{(i)}$ and $\hat D^{(i)} = -\hat G^{(i)}$,
+\begin{equation*}
+    \mathcal{P} D^{(i)}
+    = \mathcal{P}_{X^{(i)}}(D^{(i)}),\quad
+    \mathcal{P} \hat D^{(i)}
+    = \mathcal{P}_{X^{(i)}}(\hat D^{(i)}),
+\end{equation*}
+may disagree to the point that the relative error $e^{(i)}$ rises again, resulting in semi-convergence. This is illustrated in Figure~\ref{fig:cg_direction_disagreement}.
+
+Restarting sets $D^{(i)} = \hat D^{(i)}$, so the projected step $\mathcal{P}D^{(i)} = \mathcal{P}\hat D^{(i)}$ is the descent direction at $X^{(i)}$. As the iterations continue and $X^{(i)}$ drifts away from $Y^{(i)}$, this alignment gradually breaks down until the next restart. When the restart period $N_r$ is too small, the convergence of DLRA-CG will approach the steepest descent rate (at $N_r = 1$ they are equal), but choosing $N_r$ too large gives $X^{(i)}$ and $Y^{(i)}$ time to drift apart, so that semi-convergence re-appears.
+
+An adaptive selection of $N_r$ could be considered, for example only restarting once the angle or relative difference between $G^{(i)}$ and the true gradient $\hat G^{(i)}$ is above some threshold.
+
+
+\subsubsection{Rank as a regularization parameter}\label{sec:rank_as_a_regularization_parameter}
+\input{figures/outer_product_II.tex}
+The low-rank solutions outperformed exact weighted Tikhonov reconstructions (Section~\ref{sec:quality_of_the_low_rank_solutions}), but were sensitive to the choice of $r$: choosing $r$ slightly above optimal gave reconstructions resembling the full-rank case, while choosing $r$ too small introduced spurious sources for Problem~II
+(Section~\ref{sec:effect_of_rank_on_reconstructions}).
+
+The sources in Problems~I and II are of low rank and already live on $\mathcal{M}_r$. Each square source factors as an outer product of two vectors, giving a rank-$1$ matrix. The single source of Problem~I is therefore of rank~$1$, and the three sources of Problem~II sum to a matrix of rank~$3$, see Figure~\ref{fig:outer_product_II}. However, we found that a rank-$2$ approximation of this source yielded better reconstruction error. We interpret this as the rank constraint counteracting Tikhonov's oversmoothing: the discarded component is the most heavily smoothed but the least important of the three, so removing it is beneficial.
+
+In practice, the residual as a function of rank served as a practical method for choosing $r$ in the case of multiple sources (Problem~II), but there was no obvious connection between the residual and the optimal rank for the simple rank-$1$ source of Problem~I (Section~\ref{sec:residuals_of_low_rank_solutions}).
+
+
+\subsubsection{Effect of preconditioning}
+We saw that preconditioning sped up convergence, but also raised the reconstruction error (Section~\ref{sec:rate_of_convergence_using_preconditioners}), and the iterates diverged when using an IC + Woodbury preconditioner together with restarting.
+
+The convergence of CG depends on the condition number $\kappa(H)$. By using a preconditioner $P \approx H$, the condition number $\kappa(P^{-1} H)$ is reduced, and the convergence is sped up by Equation~\eqref{eq:convergence_of_CG}. As discussed in Section~\ref{sec:convergence_of_DLRA_CG}, $H$ has a large condition number, which makes preconditioning effective.
+
+In the setting of DLRA-PCG, a stronger $P$ accelerates the convergence of the iterates $Y^{(i)}$ so that they reach the full-rank weighted Tikhonov solution in fewer iterations, leaving $X^{(i)}$ further behind on $\mathcal{M}_r$. This raises the error of the final $X^{(i)}$. In the case of the perfect preconditioner $P^{-1} = H^{-1}$, $Y^{(i)}$ reaches the full-rank solution in a single step, and $X^{(i)}$ is moved a single step in the projected direction and truncated to $\mathcal{M}_r$.
+
+When using the IC preconditioner, the higher final error was resolved by restarting. With the IC + Woodbury preconditioner and restarting, however, the iterates $X^{(i)}$ diverge. Since $\mathcal{M}_r$ is non-convex \cite{absilOptimizationAlgorithmsMatrix2008}, $X^{(i)}$ may converge to a local minimum, as demonstrated in Section~\ref{sec:local_minima}, but we have no complete explanation.
+
+\section{Conclusion}\label{sec:conclusion}
+% Restatement
+We studied a source identification problem with an elliptic PDE-constrained forward operator which suffers from rapid decay of singular values and a large nullspace, leading to ill-posedness. Standard Tikhonov regularization gives biased solutions concentrated near the domain boundary, and smooths solutions such that distinct sources blur together.
+
+% Contribution
+We introduced a matrix-free rSVD approach that computes a rank-$k$ approximation to the SVD of the forward operator, avoiding explicit formation, and making Elvetun and Nielsen's weighted Tikhonov approach applicable at large scale. We also introduced the DLRA-CG method to accelerate the convergence of DLRA and efficiently recover sparse sources.
+
+% Key results
+The matrix-free rSVD solved previously computationally infeasible problems without significant loss in reconstruction quality. For the problems studied, a target rank of approximately $50$ sufficed, independent of the mesh size $N$. On noisy data, the target rank acted as additional regularization, yielding comparable results to truncated SVD.
+We also applied DLRA-CG to recover low-rank solutions, converging up to approximately $210$ times faster than DLRA with steepest descent in the tested problems. The solutions achieved lower reconstruction error and separated distinct sources more clearly than full-rank weighted Tikhonov. DLRA-CG showed semi-convergence, which was solved using restarting, at the cost of slower convergence. Preconditioning (DLRA-PCG) achieved significantly faster convergence but increased the reconstruction error. Restarting partially resolved the higher error but produced unstable results for the IC + Woodbury preconditioner.
+
+% Limitations
+The matrix-free rSVD was tested on a single elliptic PDE with simple two-dimensional geometries and square sources, and its performance on other operators or domains remains untested. For operators with a slow decay of singular values, the target rank $k$ must be larger, reducing the feasibility of the method. The random nature of the method gives varying reconstructions between runs, but this can be controlled by the oversampling parameter $p$. Applying the method to the adjoint operator $K^*$ gave mixed results: at $k = 25$, EMD error increased by 9-31\% due to higher background noise, while Euclidean error stayed within $\pm 1$\% across all $k$ and AUC-IoU within $\pm 2$\% for $k \geq 25$.
+
+The DLRA-CG method is sensitive to the choice of rank $r$, where too small a rank gives incorrect solutions while a rank only slightly above optimal gives a reconstruction resembling the full-rank case. Without restarting, it is unclear when to stop to avoid semi-convergence. However, using DLRA-CG with restarting requires choosing a restart period: too short and convergence approaches steepest descent, too long and semi-convergence returns. Preconditioning introduced further complications, where iterates converged toward non-optimal solutions, with the effect more severe for preconditioners that closely approximated the Hessian.
+
+% Future work
+Extending the matrix-free rSVD to other PDE types, three-dimensional domains, more complex sources, and other geometries would establish how broadly the results generalize. The method could be extended using power iteration, like Algorithm~4.3 in \cite{halkoFindingStructureRandomness2011}, for problems of slow spectral decay, or using an adaptive rank selection based on a specified tolerance, like Algorithm~4.2 in \cite{halkoFindingStructureRandomness2011}. It is however unclear how a tolerance for $K$ transfers to the reconstruction error. Further investigation is needed to determine under which conditions the adjoint approach is preferable.
+
+For DLRA-CG, the rank-adaptive variant of Schotthöfer et al. \cite{schotthoferLowrankLotteryTickets2022} could be explored, which removes the need for manual rank selection by automatically adapting the rank of the iterates based on a threshold. Stopping criteria such as the discrepancy principle or the L-curve \cite{hansen2010discrete} could be used to address semi-convergence. Establishing a convergence theory for DLRA-CG remains an open problem, particularly regarding the effect of preconditioning.
+
+% Final summary
+Together, these contributions provide efficient low-rank methods for sparse source identification in large-scale PDE-constrained inverse problems.

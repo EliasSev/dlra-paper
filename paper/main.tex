@@ -1,0 +1,95 @@
+% Paper based on the master's thesis (../thesis/).
+% Class: SIAM siamart251216 (Dec 2025). Do not edit siamart251216.cls or siamplain.bst.
+% Build: latexmk main.tex   (pdflatex + bibtex)
+\documentclass[review,onefignum,onetabnum]{siamart251216}
+
+% ---------------------------------------------------------------- packages
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+\graphicspath{{images/}}
+
+% Serial/Oxford comma in \cref lists
+\newcommand{\creflastconjunction}{, and~}
+
+% ---------------------------------------------------------------- theorems
+\newsiamremark{remark}{Remark}
+\renewtheorem{lemma}[theorem]{Lemma}
+\renewtheorem{corollary}[theorem]{Corollary}
+\renewtheorem{proposition}[theorem]{Proposition}
+\renewtheorem{definition}[theorem]{Definition}
+
+% ---------------------------------------------------------------- macros
+\DeclareMathOperator{\diag}{diag}
+
+% ---------------------------------------------------------------- title
+\headers{Low-rank methods for PDE-based inverse problems}{E. J. Severinsen, O. L. Elvetun, and J. Kusch}
+
+\title{Efficient Low-Rank Methods for PDE-Based Inverse Problems\thanks{Submitted to the editors DATE.}}
+
+% TODO: confirm author list, order, and affiliations with supervisors.
+\author{Elias Jegervatn Severinsen\thanks{Faculty of Science and Technology,
+  Norwegian University of Life Sciences, {\AA}s, Norway
+  (\email{elias.j.severinsen@gmail.com}).}
+\and Ole Løseth Elvetun\footnotemark[2]
+\and Jonas Kusch\footnotemark[2]}
+
+\ifpdf
+\hypersetup{
+  pdftitle={Efficient Low-Rank Methods for PDE-Based Inverse Problems},
+  pdfauthor={E. J. Severinsen, O. L. Elvetun, and J. Kusch}
+}
+\fi
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+% Problem context
+We study source identification as an elliptic PDE-constrained inverse problem, where the forward operator has rapid decay of singular values and a large nullspace, making solutions unstable and non-unique. The use of Tikhonov regularization results in biased solutions, concentrating reconstructions near the boundary of the domain regardless of the true source location. True sources are often sparse, yet Tikhonov yields smooth reconstructions, blending distinct sources into connected regions.
+
+% Gap
+Elvetun and Nielsen correct the bias by applying a regularization operator, but the procedure requires explicit assembly of the forward operator and its singular value decomposition (SVD), making it infeasible at scale. It also suffers from the same smoothing issues as the Tikhonov method, making low-rank solutions a more natural approach for sparse sources. Dynamical low-rank approximation (DLRA) provides a robust framework for computing them but converges slowly for ill-posed problems.
+
+% Contribution
+We propose a matrix-free variant of the randomized SVD (rSVD), avoiding explicit construction of the forward operator, and making the weighted Tikhonov approach scalable. We also apply conjugate gradient (CG) within the DLRA framework (DLRA-CG) to accelerate convergence and recover sparse sources.
+
+% Key results
+We apply the matrix-free rSVD approach to previously inaccessible problems with no significant loss in reconstruction quality. Using DLRA-CG, we recover low-rank solutions that separate distinct sources more clearly and achieve lower reconstruction error than full-rank weighted Tikhonov. The method converges substantially faster than DLRA.
+
+% Takeaways
+Together, these contributions make large-scale sparse source identification possible, addressing the computational cost of the weighted Tikhonov approach and the tendency of these methods to blur distinct sources.
+\end{abstract}
+
+\begin{keywords}
+  inverse source problems, Tikhonov regularization, randomized SVD,
+  dynamical low-rank approximation, conjugate gradient
+\end{keywords}
+
+\begin{MSCcodes}
+  % TODO: e.g. 65F55, 65N21, 65K10, 35R30
+\end{MSCcodes}
+
+% Tentative outline; mapping to thesis chapters in comments.
+\input{sections/1_introduction}       % thesis ch. 1
+\input{sections/2_problem_setup}      % thesis ch. 2
+\input{sections/3_rsvd}               % thesis ch. 3
+\input{sections/4_dlra_cg}            % thesis ch. 4
+\input{sections/5_experiments}        % thesis ch. 5
+\input{sections/6_conclusion}         % thesis ch. 6--7
+
+\bibliographystyle{siamplain}
+\bibliography{references}
+
+\end{document}

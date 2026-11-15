@@ -1,0 +1,43 @@
+\section{Introduction}
+\label{sec:intro}
+
+% Source: thesis/sections/1_introduction.tex
+
+% Motivation
+Elliptic partial differential equations (PDEs) model steady-state problems such as electrical potential, heat conduction, and diffusion processes \cite{straussPartialDifferentialEquations2007}, and have applications in engineering, finance, and environmental science, among others \cite{evansPartialDifferentialEquations2010,pavliotisStochasticProcessesApplications2014}.
+
+% Problem formulation
+We study source identification constrained by an elliptic PDE: given a domain $\Omega$ with boundary $\partial\Omega$ and boundary observations $y = u|_{\partial\Omega}$ of the solution $u = \mathcal{S}f$, where $\mathcal{S}$ is the solution operator of the PDE, we seek to recover the unknown interior source $f$. This leads to an inverse problem of the form
+\begin{equation}\label{eq:problem}
+    \min_{f} \left\| u - y \right\|_{L^2(\partial\Omega)}^2
+    + \lambda^2 \left\| W f \right\|_{L^2(\Omega)}^2
+\end{equation}
+subject to
+\begin{equation}\label{eq:pde}
+    \begin{aligned}
+    -\nabla \cdot \sigma\nabla u + c u &= f \quad \text{in } \Omega, \\
+    \frac{\partial u}{\partial n} &= 0 \quad \text{on } \partial\Omega.
+    \end{aligned}
+\end{equation}
+Here, $\lambda$ is a regularization parameter, $W$ is the regularization weight operator, $\sigma$ is the diffusion coefficient and $c$ is the reaction coefficient. We refer to the operator $\mathcal{K}: f \mapsto u|_{\partial\Omega}$ as the forward operator, mapping the source to the boundary values of the solution. The Neumann boundary condition in Equation~\eqref{eq:pde} ensures no flow over the boundary.
+
+This problem arises in applications such as inverse imaging, crack determination, and electromagnetic brain mapping \cite{nielsenComputingIschemicRegions2013,elulGenesisEEG1971,PDFRecoveryCracks}. For example, in electroencephalography (EEG), it can be used for improved understanding and treatment of brain disorders like Alzheimer's, Parkinson's, and depression \cite{elulGenesisEEG1971, ElectromagneticBrainMapping}.
+
+However, source identification problems of this form are ill-posed, as the operator $\mathcal K$ has a rapid decay of singular values and a large nullspace. Reconstructions are therefore unstable and non-unique \cite{hansen2010discrete}. Standard approaches like Tikhonov regularization introduce bias to the reconstructions, making solutions appear near the domain boundary regardless of the true location of the source \cite{elvetunRegularizationOperatorSource2020}. True sources are often sparse, yet Tikhonov smooths reconstructions, blurring distinct sources into connected regions.
+
+% Prior work
+Elvetun and Nielsen address the localization bias of Tikhonov by introducing regularization weights $W$ that use information about the forward operator $\mathcal{K}$ to correct the bias \cite{elvetunRegularizationOperatorSource2020}. This method shows promising results, correctly identifying the position of one or multiple sources from boundary data \cite{elvetunRegularizationOperatorSource2020,elvetunModifiedTikhonovRegularization2020}. However, their approach requires explicit knowledge about $\mathcal{K}$ and its SVD, making it computationally infeasible for large-scale problems. Also, for sparse sources, Elvetun and Nielsen's method still suffers from the same smoothing problems as Tikhonov, blurring the reconstructions and blending distinct sources \cite{elvetunModifiedTikhonovRegularization2020}. 
+Since sparse sources are naturally represented by low-rank matrices, recovering low-rank solutions is an appropriate objective. Dynamical low-rank approximation (DLRA) provides a robust framework for this \cite{schotthoferLowrankLotteryTickets2022}, but existing methods rely on first-order updates such as Adam \cite{kingmaAdamMethodStochastic2017} and steepest descent, which converge slowly for ill-conditioned problems \cite{chong2023introduction,hansen2010discrete,nocedal2006numerical}.
+
+% Contribution
+We propose two methods. The first is a matrix-free variant of the randomized SVD (rSVD) that computes a rank-$k$ factorization of the forward operator, avoiding its explicit formation and addressing the computational cost of Elvetun and Nielsen's 
+weights. The second recovers sparse, rank-$r$ sources where Tikhonov smooths, converging substantially faster than existing DLRA methods. The ranks $k$ and $r$ are independent: $k$ is the approximation rank of $\mathcal{K}$, and $r$ is the rank of the matrix representation of the source $f$.
+
+The first method uses random sampling of $\operatorname{range}(K)$ to compute an approximate rank-$k$ SVD $K \approx U \Sigma V^T$ of the discretized forward operator, which can then be used to solve the weighted Tikhonov problem at large scale. It relies on applications of the forward operator $K$ and adjoint $K^*$, which can be done efficiently by pre-computing sparse Cholesky factorizations of the PDE operator. The method is applied to previously computationally infeasible problems without a significant loss in reconstruction quality.
+
+The second method uses conjugate gradient (CG) within the DLRA framework to accelerate convergence and recover sparse sources. It adapts the DLRA method proposed by Schotthöfer et al. for neural network training \cite{schotthoferLowrankLotteryTickets2022} to the setting of sparse source identification. The convex optimization problem of Equation~\eqref{eq:problem}, with Elvetun and Nielsen's $W$, defines an objective function $\Phi$ with a symmetric positive definite (SPD) Hessian $H$, for which CG is particularly well-suited \cite{hestenesMethodsConjugateGradients1952,fletcherFunctionMinimizationConjugate1964}. The resulting method converges substantially faster than DLRA with steepest descent and yields rank-$r$ solutions that separate distinct sources more clearly than full-rank weighted Tikhonov.
+
+The proposed methods are not limited to the particular problem studied in this thesis. The matrix-free rSVD method is well suited for a broader class of elliptic source identification problems, where the forward operators have rapid spectral decay \cite{evansPartialDifferentialEquations2010,engl1996regularization}. The DLRA-CG method can be used for low-rank problems with a quadratic objective function and an SPD Hessian.
+
+% Thesis outline 
+The remainder of this thesis is organized as follows. Section~\ref{sec:mathematical_background} covers preliminaries and describes the discretization of Equation~\eqref{eq:problem} and the weights of Elvetun and Nielsen. Section~\ref{sec:approximating} presents the matrix-free rSVD (Algorithm~\ref{alg:discrete_rsvd}) and a variant of it applied to $K^*$ (Algorithm~\ref{alg:discrete_rsvd_Kstar}). Section~\ref{sec:dynamical_low_rank_approximation} motivates DLRA and introduces the DLRA-CG method (Algorithm~\ref{alg:DLRA-CG}) and a preconditioned variant (Algorithm~\ref{alg:DLRA-PCG}). Section~\ref{sec:results} reports numerical experiments for both methods, examining computational cost, reconstruction error, and convergence rates. Section~\ref{sec:discussion} discusses the results, and Section~\ref{sec:conclusion} concludes with limitations and future directions.

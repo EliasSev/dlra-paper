@@ -1,0 +1,32 @@
+\begin{algorithm}[!thbp]
+\caption{Matrix-free estimation of the Elvetun--Nielsen weights}
+\label{alg:en_weights}
+\begin{algorithmic}[1]
+    \Require Adjoint operator $K^*: \mathbb{R}^{N_b} \to \mathbb{R}^N$, mass matrix $M$, volumes $\nu \in \mathbb{R}^N$, target rank $k$, oversampling parameter $p$
+    \Ensure Approximate weights $w \in \mathbb{R}^N$
+
+    \State \textbf{Range sketch of the observable subspace $\mathcal{R}(K^*)$:}
+    \State Set $l = k + p$
+    \Comment{Ensure that $l \le N_b$}
+    \For{$i = 1, \dots, l$}
+        \State Draw a random vector $\psi_i \in \mathbb{R}^{N_b}$
+        \State Apply the adjoint operator: $y_i = K^* \psi_i \in \mathbb{R}^N$
+    \EndFor
+    \State Form the matrix $Y = [y_1, \dots, y_l] \in \mathbb{R}^{N \times l}$ \Comment{Equivalent to $Y = K^* \Psi$}
+
+    \State \textbf{$M$-orthogonal projection diagonal:}
+    \State Set $Z = M Y \in \mathbb{R}^{N \times l}$
+    \State Form the Gram matrix $G = Y^T Z \in \mathbb{R}^{l \times l}$ \Comment{Equivalent to $G = Y^T M Y$}
+    \State Compute the truncated pseudo-inverse $G^{+}$ \Comment{Drop eigenvalues below $\tau \, \lambda_{\max}(G)$}
+    \For{$i = 1, \dots, N$}
+        \State Let $z_i$ be the $i$-th row of $Z$
+        \State Set $s_i = z_i^{} G^{+} z_i^T$ \Comment{$s_i = \lVert Q^T M e_i \rVert_2^2$, $\; Q^T M Q = I$}
+    \EndFor
+
+    \State \textbf{Weights:}
+    \For{$i = 1, \dots, N$}
+        \State Set $w_i = \sqrt{\max(s_i, 0)} \, / \, \nu_i$
+    \EndFor
+
+\end{algorithmic}
+\end{algorithm}

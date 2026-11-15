@@ -1,0 +1,41 @@
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        >=stealth,
+        line width=0.9pt,
+        every node/.style={font=\large}
+    ]
+    % Boxes
+    \draw (0,0) rectangle (2,2);
+    \draw (3,0) rectangle (5,2);
+    \draw (6,0) rectangle (8,2);
+    
+    % Space labels H^1
+    \node at (1,-0.5) {$L^2(\Omega)$};
+    \node at (4,-0.5) {$H^1(\Omega)$};
+    \node at (7,-0.5) {$L^2(\partial\Omega)$};
+    
+    % f, u, and u|_dOmega points
+    \node (f) at (1,1) {$f$};
+    \node (u) at (4,1) {$u$};
+    \node (g) at (7,1) {$u|_{\partial\Omega}$};
+    
+    % Operator S
+    \draw[->]
+      (f) -- (u)
+      node[midway, below, xshift=0.0mm] {$\mathcal S$};
+    
+    % Operator T
+    \draw[->]
+      (u) -- (g)
+      node[midway, below, xshift=1.0mm] {$\mathcal T$};
+    
+    % Operator K
+    \draw[->]
+      (f) to[out=45, in=140]
+      node[midway, above] {$\mathcal{K}$}
+      (g);
+    \end{tikzpicture}
+    \caption{The forward operator $\mathcal K = \mathcal T \circ \mathcal S$ maps $f$ to $u|_{\partial\Omega}$.}
+    \label{fig:forward_operator}
+\end{figure}
