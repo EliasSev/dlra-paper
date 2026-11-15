@@ -86,7 +86,7 @@ $\{\phi_i\}_{i=1}^N$ yields the linear system
 \begin{equation}\label{eq:matrix_system}
     A_h u = M x,
 \end{equation}
-where $A_h \in \mathbb{R}^{N \times N}$ is the stiffness matrix and $M \in \mathbb{R}^{N \times N}$ the mass matrix, both symmetric positive definite, see Appendix~\ref{appendix:stiffness}.
+where $A_h \in \mathbb{R}^{N \times N}$ is the stiffness matrix and $M \in \mathbb{R}^{N \times N}$ the mass matrix, both symmetric positive definite \cite{larsonFiniteElementMethod2013}.
 Equation~\eqref{eq:matrix_system} implies that the discrete PDE operator $S$ takes the form
 \begin{equation*}
     S = A_h^{-1} M \in \mathbb{R}^{N \times N}.
@@ -130,7 +130,7 @@ $u_h|_{\partial\Omega}$ and $v_h|_{\partial\Omega}$. The $L^2(\partial\Omega)$ i
     =
     \sqrt{u^T M_{\partial} u},
 \end{equation}
-where $M_\partial$ denotes the boundary mass matrix, see Appendix~\ref{appendix:stiffness}.
+where $M_\partial$ denotes the boundary mass matrix.
 
 
 \subsubsection{The adjoint operator}
