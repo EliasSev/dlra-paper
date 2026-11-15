@@ -12,7 +12,7 @@ Equation~\eqref{eq:pde} is a linear diffusion-reaction problem with Neumann boun
 \begin{equation}\label{eq:S_cont}
     \mathcal S: L^2(\Omega) \rightarrow H^1(\Omega), \quad \mathcal{S} f = u.
 \end{equation}
-Here, $L^2(\Omega)$ is the space of square integrable functions and $H^1(\Omega) \subset L^2(\Omega)$ a first-order Sobolev space, see Appendix~\ref{appendix:functional_analysis_and_the_fem}.
+Here, $L^2(\Omega)$ is the space of square integrable functions, and $H^1(\Omega)$ is the Sobolev space of functions in $L^2(\Omega)$ whose weak first derivatives also belong to $L^2(\Omega)$ \cite{quarteroniNumericalModelsDifferential2014}.
 
 To model boundary observations, we introduce the trace operator
 \begin{equation}\label{eq:trace}
@@ -106,7 +106,7 @@ Combining the discrete PDE and trace operators yields the matrix representation 
 
 
 \subsubsection{Discrete inner product and norm}
-Let $V_h$ be the finite element space introduced in Equation~\eqref{eq:fem_space} and let $f_h, g_h \in V_h$, with coefficient vectors $x, y \in \mathbb{R}^N$, respectively. The $L^2(\Omega)$ inner product (see Appendix~\ref{appendix:functional_analysis_and_the_fem}) of $f_h$ and $g_h$, can be written as
+Let $V_h$ be the finite element space introduced in Equation~\eqref{eq:fem_space} and let $f_h, g_h \in V_h$, with coefficient vectors $x, y \in \mathbb{R}^N$, respectively. The $L^2(\Omega)$ inner product of $f_h$ and $g_h$ can be written as
 \begin{equation*}
     \langle f_h, g_h \rangle_{L^2(\Omega)} = x^T M y,
 \end{equation*}
