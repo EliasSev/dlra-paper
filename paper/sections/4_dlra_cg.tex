@@ -69,7 +69,7 @@ The Hessian is SPD, since $K^T M_\partial K$ is positive semidefinite, $\lambda^
 
 
 \subsection{DLRA with conjugate search directions}
-Since $\Phi$ is quadratic with an SPD Hessian $H$, the conjugate gradient (CG) method is a natural minimization strategy \cite{saadIterativeMethodsSparse2003,fletcherFunctionMinimizationConjugate1964,hestenesMethodsConjugateGradients1952}, see Appendix~\ref{appendix:conjugate_gradient_algorithm}.
+Since $\Phi$ is quadratic with an SPD Hessian $H$, the conjugate gradient (CG) method is a natural minimization strategy \cite{saadIterativeMethodsSparse2003,fletcherFunctionMinimizationConjugate1964,hestenesMethodsConjugateGradients1952}.
 
 CG generates a sequence of search directions $\{D^{(i)}\}$ that are $H$-conjugate, i.e., $\langle D^{(i)}, H D^{(j)}\rangle_F = 0$ for $i \neq j$. Starting from the initial search direction $D^{(0)} = -G^{(0)}$, each step computes an optimal step size
 \begin{equation*}
