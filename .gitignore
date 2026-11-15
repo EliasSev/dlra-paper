@@ -9,6 +9,21 @@ wheels/
 # Virtual environments
 .venv
 
-CLAUDE.md
-thesis/
+# Agent context
 .claude/
+CLAUDE.md
+AGENTS.md
+MIGRATION.md
+
+# LaTeX build files (paper/)
+thesis/
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.log
+paper/*.out
+paper/*.thm
+paper/*.synctex.gz
+paper/main.pdf
