@@ -147,7 +147,14 @@ Using the definition in Equation~\eqref{eq:K_star_cont}, we get the weak formula
     \int_{\partial\Omega} g v \, ds,
     \text{ for all } v \in H^1(\Omega).
 \end{equation}
-The solution $w$ then satisfies $\mathcal K^* g = w$. See Appendix~\ref{appendix:adjoint_derivation} for a complete derivation.
+To verify that $\mathcal K^* g = w$, let $u = \mathcal S f$. Testing Equation~\eqref{eq:variational_formulation} with $v = w$ and Equation~\eqref{eq:variational_formulation_adjoint} with $v = u$, and using the symmetry of $\sigma$, gives
+\begin{equation*}
+    \langle \mathcal K f, g \rangle_{L^2(\partial\Omega)}
+    = \int_{\partial\Omega} g u \, ds
+    = \int_\Omega f w \, dx
+    = \langle f, w \rangle_{L^2(\Omega)}.
+\end{equation*}
+Thus $w$ satisfies the identity~\eqref{eq:K_star_cont}.
 
 In the discrete case, under the inner products and norms defined in Equations~\eqref{eq:fem_norm} and~\eqref{eq:fem_norm_ds}, the adjoint operator $K^* \in \mathbb{R}^{N \times N_b}$ of $K \in \mathbb{R}^{N_b \times N}$ satisfies
 \begin{equation}\label{eq:K_star_def}
