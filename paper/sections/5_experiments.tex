@@ -20,6 +20,44 @@ All numerical experiments were performed on a laptop running Fedora Linux 43 wit
 Python 3.9 was used for all computations, together with NumPy and SciPy for linear algebra routines \cite{harrisArrayProgrammingNumPy2020,virtanenSciPy10Fundamental2020}. The FEniCS software was used for solving PDEs using the finite element method \cite{alnaesFEniCSProjectVersion2015,loggAutomatedSolutionDifferential2012}. All library specifications, algorithm implementations, and notebooks used to generate the results in this thesis are openly available at: \href{https://github.com/EliasSev/masters-thesis}{github.com/EliasSev/masters-thesis}.
 
 
+\subsection{Performance metrics}\label{sec:performance_metrics}
+Let $x \in \mathbb{R}^N$ denote the true source (its coefficient vector) and $\hat x \in \mathbb{R}^N$ its corresponding reconstruction. To evaluate reconstruction quality, we consider three performance metrics: Euclidean error, EMD, and AUC-IoU.
+
+
+\paragraph{Earth mover's distance.} The earth mover's distance measures the dissimilarity between two distributions, which in our case refers to $x$ and $\hat x$. Let $x_d$ and $\hat x_d$ be the normalized distributions of $x$ and $\hat x$, respectively, computed as
+\begin{equation*}
+    (x_d)_i = \frac{|x_i|}{\sum_{j=1}^N |x_j|}, \quad
+    (\hat x_d)_i = \frac{|\hat x_i|}{\sum_{j=1}^N |\hat x_j|}.
+\end{equation*}
+Let $p_i \in \mathbb{R}^2$ denote the spatial coordinates of the $i$-th node in the mesh. The EMD between $x_d$ and $\hat x_d$ is
+\begin{equation*}
+    \operatorname{EMD}(x_d, \hat x_d) =
+    \inf_{\gamma \in \Pi}
+    \sum_{i,j=1}^N \gamma_{ij}\, \| p_i - p_j \|,
+\end{equation*}
+where $\Pi$ is the set of all joint distributions with marginals $x_d$ and $\hat x_d$ \cite{rubnerMetricDistributionsApplications1998}.
+
+
+\paragraph{AUC-IoU.} The IoU, known as the Jaccard index in statistics, measures the similarity between two sets. It is defined as the size of intersection divided by the size of the union \cite{raschkaPythonMachineLearning}.
+
+We define the binary mask of $x$ at threshold $\tau \in (0, 1)$ as the set
+\begin{equation*}
+    S_{\tau}(x) = \{ i : x_i \ge \tau \operatorname{max}(x) \}.
+\end{equation*}
+Then, the IoU of $x$ and $\hat x$ at threshold $\tau$ is the IoU of their binary masks,
+\begin{equation*}
+    \operatorname{IoU}(\tau) =
+    \frac{|S_\tau(x) \cap S_\tau(\hat x)|}{|S_\tau(x) \cup S_\tau(\hat x)|}.
+\end{equation*}
+Here, $| \cdot |$ denotes the number of elements of a set (its cardinality).
+
+The AUC-IoU is then the integration of the $\operatorname{IoU}(\tau)$ curve,
+\begin{equation*}
+    \operatorname{AUC-IoU} = \int_{0}^{1} \operatorname{IoU}(\tau) \, d\tau.
+\end{equation*}
+This can be approximated using the Trapezoidal rule. The AUC-IoU lies in $[0, 1]$, with 1 being a perfect score.
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Matrix-free Randomized SVD Part 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -52,7 +90,7 @@ For Problem~I (Figure~\ref{fig:test_problem_I}) at $k = 10$, the location of the
 
 \input{figures/rsvd_over_k.tex}
 \input{tables/rsvd_over_k.tex}
-To measure reconstruction error, we consider three different metrics: Euclidean norm, earth mover's distance (EMD), and the area under the intersection over union curve (AUC-IoU). These metrics emphasize the localization and spatial shape of the reconstructed source, rather than just the amplitude. See Appendix~\ref{appendix:performance_metrics} for details on each metric. An AUC-IoU score of 1 indicates a perfect overlap of the reconstruction and the true source.
+To measure reconstruction error, we consider three different metrics: Euclidean norm, earth mover's distance (EMD), and the area under the intersection over union curve (AUC-IoU). These metrics emphasize the localization and spatial shape of the reconstructed source, rather than just the amplitude. See Section~\ref{sec:performance_metrics} for details on each metric. An AUC-IoU score of 1 indicates a perfect overlap of the reconstruction and the true source.
 
 Figure~\ref{fig:rsvd_over_k} shows the reconstruction error for target ranks $k \in [5,\, 100]$ and oversampling parameters $p = 0,\, 5,\, 10$. The error curves flatten beyond $k \approx 100$, so the figure is cropped there for more detail at smaller $k$. Table~\ref{tab:rsvd-over-k} gives the relative difference (in \%) between the rSVD and exact Tikhonov solutions at selected $k$.
 
