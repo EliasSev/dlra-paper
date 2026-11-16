@@ -175,7 +175,7 @@ The weights $W$ can include prior knowledge about the solution to penalize speci
 
 
 \subsection{SVD and low-rank approximations}
-The SVD of $K$ underlies the methods developed in this thesis. Since $K$ has a rapid decay of singular values, $K$ can be approximated well by a low-rank matrix. Additionally, the SVD is needed to construct the pseudoinverse of $K$, which is used for the regularization weights in Section~\ref{sec:the_discrete_inverse_problem}.
+The SVD of $K$ underlies the methods developed in this paper. Since $K$ has a rapid decay of singular values, $K$ can be approximated well by a low-rank matrix. Additionally, the SVD is needed to construct the pseudoinverse of $K$, which is used for the regularization weights in Section~\ref{sec:the_discrete_inverse_problem}.
 
 Consider the goal of finding a rank-$k$ approximation to an $m \times n$ matrix $A$. We seek a matrix $A_k$ with $\operatorname{rank}(A_k) \le k$ which approximates $A$. The problem formulation is
 \begin{equation}\label{eq:low_rank_problem}
@@ -208,7 +208,7 @@ assuming $A^{-1}$ exists. If $A$ is singular, then $\kappa(A) = \infty$. When $\
 
 
 \subsubsection{Truncated SVD}\label{sec:tsvd}
-The best rank-$k$ approximation of $A$ given by the Eckart-Young-Mirsky theorem, $A_k = U_k \Sigma_k V_k^T$, is known as the truncated SVD (tSVD). Since it truncates the small singular values of $A$, it serves as a regularization technique \cite{hansen2010discrete}. The tSVD also provides a natural reference for the approximate methods developed in this thesis.
+The best rank-$k$ approximation of $A$ given by the Eckart-Young-Mirsky theorem, $A_k = U_k \Sigma_k V_k^T$, is known as the truncated SVD (tSVD). Since it truncates the small singular values of $A$, it serves as a regularization technique \cite{hansen2010discrete}. The tSVD also provides a natural reference for the approximate methods developed in this paper.
 
 
 \subsubsection{The pseudoinverse}\label{sec:the_pseudoinverse}
