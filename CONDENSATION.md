@@ -53,7 +53,7 @@ confirm the transformed noisy-data experiment and the local-minimum account;
 | Removal of rSVD-on-K* variant and related content | Approved in conversation, 17 November 2026; review required before every commit |
 | Noisy-data scope exception or removal | Pending D1 below |
 | Placement of other secondary studies and illustrations | Pending D2 below; K* removal supersedes its earlier placement proposals |
-| First editing batch | Committed as `8d07571`; batch 2 reviewed and approved for commit |
+| First editing batch | Committed as `8d07571`; batch 2 committed as `540a40a`; batch 3 reviewed and approved for commit; adjoint-variant removal complete |
 
 Record subsequent approvals here with date, affected items and any conditions;
 check off editing items only after the corresponding reviewed edit is complete.
@@ -74,8 +74,8 @@ after each batch; commit only after approval, then prepare the next batch.
 | Batch | Exact changes | Status |
 |---|---|---|
 | 1 — Discussion and Conclusion | In `paper/sections/6_conclusion.tex`, remove “Overhead of the adjoint formulation” and “Reconstruction error using the adjoint operator” (including the `true_singular_values` figure input). Remove the alternative algorithm reference beside `eq:rsvd_error_bound`, the final K* comparison sentence in “Estimation of singular values,” and the adjoint-specific limitation and future-work sentences in Conclusion. | Committed as `8d07571` after user review (17 November 2026) |
-| 2 — Experimental comparisons | In `paper/sections/5_experiments.tex`, remove “Computational time of adjoint operator” and “Reconstruction error using the adjoint operator.” In “Approximation of singular values,” retain the K-only findings and 0.969 value, removing K* comparisons and 0.929. Simplify `paper/tables/singular_values_comparison.tex` to K rows, removing the redundant method column and updating its caption. | Reviewed and approved for commit (17 November 2026) |
-| 3 — Method and unused assets | Remove “Approximating the adjoint operator,” its algorithm input and “Recovering the SVD” from `paper/sections/3_rsvd.tex`. Change “Both algorithms” and the M-factorization/solve alternatives in “Initial matrix factorizations” to the requirements of the K algorithm. Remove “and its adjoint variant” from the Introduction roadmap. Delete the exclusive files listed below once no live inputs/references remain. | Not started |
+| 2 — Experimental comparisons | In `paper/sections/5_experiments.tex`, remove “Computational time of adjoint operator” and “Reconstruction error using the adjoint operator.” In “Approximation of singular values,” retain the K-only findings and 0.969 value, removing K* comparisons and 0.929. Simplify `paper/tables/singular_values_comparison.tex` to K rows, removing the redundant method column and updating its caption. | Committed as `540a40a` after user review (17 November 2026) |
+| 3 — Method and unused assets | Remove “Approximating the adjoint operator,” its algorithm input and “Recovering the SVD” from `paper/sections/3_rsvd.tex`. Change “Both algorithms” and the M-factorization/solve alternatives in “Initial matrix factorizations” to the requirements of the K algorithm. Remove “and its adjoint variant” from the Introduction roadmap. Delete the exclusive files listed below once no live inputs/references remain. | Complete; reviewed and approved for commit (17 November 2026) |
 
 Exclusive files to remove in batch 3:
 
@@ -100,6 +100,12 @@ were edited; asset deletion is deferred to batch 3.
 Batch 2 validation: `latexmk main.tex` passed; no undefined references/citations
 or BibTeX warnings. Layout and caption-class warnings remain. `git diff --check`
 passed. The removed comparisons' asset files remain for batch 3 cleanup.
+
+Batch 3 validation: `latexmk main.tex` passed (44-page PDF); no undefined
+references/citations or BibTeX warnings. Caption-class and layout warnings remain.
+`git diff --check` passed. No retired labels or adjoint-variant descriptions
+remain in paper TeX; all twelve exclusive files were removed. The adjoint
+definition and its application in the primary rSVD remain unchanged.
 
 Validation per batch: build with `latexmk main.tex` in `paper/`; inspect warnings
 and the diff. At the final batch, search live TeX for retired labels

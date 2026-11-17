@@ -50,31 +50,9 @@ The factorization in \eqref{eq:rsvd_approx} is of rank $l$, since $U \Sigma V^T 
 \input{algorithms/matrix-free-rsvd.tex}
 
 
-\subsection{Approximating the adjoint operator}
-An alternative is to apply the rSVD to the adjoint operator $K^*$. By Equation~\eqref{eq:K_star_def}, $K = M_\partial^{-1} (K^*)^T M$, so if $K^* \approx \bar U \bar \Sigma \bar V^T$ is an approximation obtained via the rSVD, then $K$ can be recovered via $K = M_\partial^{-1} \bar V \bar \Sigma \bar U^T M$. In practice, this variant may yield a better low-rank approximation, depending on the quality of the random sampling $K^* \psi_i$ compared to $K \psi_j$.
-
-Algorithm~\ref{alg:discrete_rsvd} extends directly to $K^*$ by replacing $K$ with $K^*$ and drawing random test vectors $\psi_i \in \mathbb{R}^{N_b}$, obtaining a sampling matrix $Y \in \mathbb{R}^{N \times l}$ and an orthonormal basis $Q = \operatorname{orth}(Y)$. For the projection step $B = Q^T K^*$, choosing $z = M^{-1}q_i$ in the adjoint identity $(K z)^T M_\partial = z^T M K^*$ gives $b_i = (K(M^{-1}q_i))^T M_\partial$, by the same argument as in Section~\ref{sec:a_matrix_free_rsvd_scheme}. The procedure is summarized in Algorithm~\ref{alg:discrete_rsvd_Kstar}.
-\input{algorithms/matrix-free-rsvd-Kstar.tex}
-
-
-\subsubsection{Recovering the SVD}\label{sec:reconvering_the_svd}
-Given the approximate rank-$k$ SVD $K^* \approx \bar{U}\bar{\Sigma}\bar{V}^T$, where $\bar U \in \mathbb{R}^{N \times k}$, $\bar \Sigma \in \mathbb{R}^{k \times k}$, and $\bar V \in \mathbb{R}^{N_b \times k}$, $K$ can be approximated from the relation $K = M_\partial^{-1} \bar V \bar \Sigma \bar U^T M$. We recover the SVD of $K$: define the $N_b \times k$ matrix $A = M_\partial^{-1} \bar V$ and the $N \times k$ matrix $B = M \bar U$, giving the rank-$k$ factorization
-\begin{equation*}
-    K \approx A \bar \Sigma B^T.
-\end{equation*}
-Next, compute the thin QR factorization $Q_A R_A = A$ and $Q_B R_B = B$, where $Q_A \in \mathbb{R}^{N_b \times k}$, $Q_B \in \mathbb{R}^{N \times k}$, and $R_A, R_B \in \mathbb{R}^{k \times k}$. Then, $K \approx Q_A (R_A \bar \Sigma R_B^T) Q_B^T$, and taking the SVD of the small $k \times k$ matrix $R_A \bar \Sigma R_B^T = \hat U \Sigma \hat V^T$ gives 
-\begin{equation*}
-    K \approx Q_A (\hat U \Sigma \hat V^T) Q_B^T.
-\end{equation*}
-By setting $U = Q_A \hat U$ and $V = Q_B \hat V$, we get the rank-$k$ approximate SVD
-\begin{equation*}
-    K \approx U \Sigma V^T.
-\end{equation*}
-
-
 \subsection{Initial matrix factorizations}\label{sec:initial_matrix_factorizations}
-Both algorithms factorize the stiffness matrix $A_h$ and the mass matrices $M$ and $M_\partial$ once at initialization. Each application of $K$ or $K^*$ then reduces to triangular solves with $A_h$, and each mass matrix solve $M_\partial \tilde{q}_i = q_i$ or $M\tilde{q}_i = q_i$ reduces to triangular solves with the respective factorization.
+Algorithm~\ref{alg:discrete_rsvd} factorizes the stiffness matrix $A_h$ and the boundary mass matrix $M_\partial$ once at initialization. Each application of $K$ or $K^*$ then reduces to sparse matrix products and triangular solves with $A_h$, and each mass matrix solve $M_\partial \tilde{q}_i = q_i$ reduces to triangular solves with the factorization of $M_\partial$.
 
-Under the assumptions that $\sigma$ is positive (symmetric positive definite in the matrix-valued case) and $c > 0$, the matrix $A_h$ is SPD. The mass matrices $M$ and $M_\partial$ are also SPD \cite{larsonFiniteElementMethod2013}. These matrices can therefore be factorized using the Cholesky decomposition. The sparse structure of the stiffness and mass matrices can be exploited to efficiently compute such factorizations. For instance, the nested dissection method, proposed by George \cite{georgeNestedDissectionRegular1973}, may compute such a Cholesky factorization in $\mathcal{O}(N^{3/2})$ computations. In two dimensions, nested dissection gives a Cholesky factor $L$ with $\mathcal{O}(N \log N)$ nonzero entries. Sparse triangular solves cost $\mathcal{O}(\operatorname{nnz}(L))$, where $\operatorname{nnz}(L)$ denotes the number of nonzero entries in $L$. Thus, after factorization, each solve costs $\mathcal{O}(N \log N)$ \cite{georgeComputerSolutionLarge1984,liptonGeneralizedNestedDissection1979}.
+Under the assumptions that $\sigma$ is positive (symmetric positive definite in the matrix-valued case) and $c > 0$, the matrix $A_h$ is SPD. The boundary mass matrix $M_\partial$ is also SPD \cite{larsonFiniteElementMethod2013}. These matrices can therefore be factorized using the Cholesky decomposition. The sparse structure of the stiffness and mass matrices can be exploited to efficiently compute such factorizations. For instance, the nested dissection method, proposed by George \cite{georgeNestedDissectionRegular1973}, may compute such a Cholesky factorization in $\mathcal{O}(N^{3/2})$ computations. In two dimensions, nested dissection gives a Cholesky factor $L$ with $\mathcal{O}(N \log N)$ nonzero entries. Sparse triangular solves cost $\mathcal{O}(\operatorname{nnz}(L))$, where $\operatorname{nnz}(L)$ denotes the number of nonzero entries in $L$. Thus, after factorization, each solve costs $\mathcal{O}(N \log N)$ \cite{georgeComputerSolutionLarge1984,liptonGeneralizedNestedDissection1979}.
 
 In particular, if $A_h = LL^T$ is a Cholesky factorization, then $K = T (LL^T)^{-1}M$. To compute $y_i = K \psi_i$, the system $LL^T v = M \psi_i$ is solved via two triangular solves, and $y_i = T v$. A similar procedure is done when applying $K^* = A_h^{-1}T^TM_\partial$, where the factorization $A_h = LL^T$ can be reused since $A_h = A_h^T$.
