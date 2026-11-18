@@ -130,7 +130,7 @@ We measure the reconstruction error for the transformed weighted Tikhonov proble
 \input{figures/reconstruction_noisy_problem.tex}
 \input{figures/noisy_problem.tex}
 
-Figure~\ref{fig:noisy_problem} and Table~\ref{tab:noisy} report reconstruction error and optimal ranks for rSVD (Algorithm~\ref{alg:discrete_rsvd}) and tSVD (Section~\ref{sec:tsvd}) on the noisy problem. Figure~\ref{fig:reconstruction_noisy_problem} illustrates how a target rank that is too high includes noise in the reconstruction.
+Figure~\ref{fig:noisy_problem} and Table~\ref{tab:noisy} report reconstruction error and optimal ranks for rSVD (Algorithm~\ref{alg:discrete_rsvd}) and tSVD (Equation~\eqref{eq:tsvd}) on the noisy problem. Figure~\ref{fig:reconstruction_noisy_problem} illustrates how a target rank that is too high includes noise in the reconstruction.
 
 In terms of Euclidean error, the optimal rank is between 50 and 75 for rSVD, and 45 and 85 for tSVD. The EMD is more sensitive to higher ranks which include more noise (Figure~\ref{fig:reconstruction_noisy_problem}), and the optimal rank for EMD is between 20 and 30 for both methods. For AUC-IoU, optimal ranks are between 60 and 65 for rSVD, and between 65 and 95 for tSVD, except for Problem~III with rSVD where the optimal rank exceeds the tested range.
 

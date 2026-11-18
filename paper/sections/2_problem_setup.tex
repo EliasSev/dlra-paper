@@ -182,27 +182,20 @@ The weights $W$ can include prior knowledge about the solution to penalize speci
 
 
 \subsection{SVD and low-rank approximations}
-The SVD of $K$ underlies the methods developed in this paper. Since $K$ has a rapid decay of singular values, $K$ can be approximated well by a low-rank matrix. Additionally, the SVD is needed to construct the pseudoinverse of $K$, which is used for the regularization weights in Section~\ref{sec:the_discrete_inverse_problem}.
-
-Consider the goal of finding a rank-$k$ approximation to an $m \times n$ matrix $A$. We seek a matrix $A_k$ with $\operatorname{rank}(A_k) \le k$ which approximates $A$. The problem formulation is
-\begin{equation}\label{eq:low_rank_problem}
-    \min_{\operatorname{rank}(A_k)\le k} \|A - A_k \|_2,
-\end{equation}
-where $\| \cdot \|_2$ is the $\ell_2$ operator norm, also known as the spectral norm.
-
+The rapid decay of the singular values of $K$ makes it possible to approximate $K$ well by a low-rank matrix. Its right singular vectors also determine the regularization weights in Section~\ref{sec:the_discrete_inverse_problem}.
 
 \subsubsection{Singular value decomposition}
-The singular value decomposition of a matrix $A\in\mathbb R^{m\times n}$ is a factorization of the form
-\begin{equation*}
-    A = U\Sigma V^T,
-\end{equation*}
-where $U$ is an $m \times m$ orthogonal matrix, $\Sigma$ is an $m\times n$ diagonal matrix with non-negative entries, called the singular values of $A$, and $V$ is an $n \times n$ orthogonal matrix. The singular values are ordered such that $\sigma_1\ge\sigma_2\ge\dots\ge\sigma_n$. Every matrix has such a factorization, where $\Sigma$ is uniquely determined, but $U$ and $V$ are not \cite{layLinearAlgebraIts2022}. The columns of $U$ and $V$ are called the left and right singular vectors of $A$, respectively, and are denoted $u_i$ and $v_i$.
+The singular value decomposition of a matrix $A\in\mathbb R^{m\times n}$ of rank $q$ is $A=U\Sigma V^T$, where $U\in\mathbb R^{m\times q}$ and $V\in\mathbb R^{n\times q}$ have orthonormal columns and $\Sigma=\operatorname{diag}(\sigma_1,\dots,\sigma_q)$ with $\sigma_1\ge\cdots\ge\sigma_q>0$. The columns $u_i$ and $v_i$ of $U$ and $V$ are the left and right singular vectors of $A$, respectively.
 
-In 1936, C. Eckart and G. Young showed that the solution to Equation~\eqref{eq:low_rank_problem} is $A_k = U_k\Sigma_k V_k^T$, where $U_k$ and $V_k$ consist of the first $k$ left and right singular vectors of $A$, respectively, and $\Sigma_k$ contains the first $k$ singular values of $A$ \cite{eckartApproximationOneMatrix1936}. This is known as the Eckart-Young-Mirsky theorem. This implies that
-\begin{equation}\label{eq:svd_error}
-    \min_{\operatorname{rank}(X)\le k} \|A - X \|_2 = \sigma_{k+1},
+Keeping the first $k$ singular values and the corresponding singular vectors gives the truncated SVD (tSVD),
+\begin{equation}\label{eq:tsvd}
+    A_k = U_k\Sigma_k V_k^T.
 \end{equation}
-where $\sigma_{k+1}$ is the $(k+1)$th singular value of $A$. Equation \eqref{eq:svd_error} says that no rank-$k$ approximation of $A$ can have an error smaller than $\sigma_{k+1}$.
+By the Eckart--Young--Mirsky theorem \cite{eckartApproximationOneMatrix1936}, $A_k$ is the best approximation of $A$, with its error in the spectral norm satisfying
+\begin{equation}\label{eq:svd_error}
+    \|A-A_k\|_2 = \min_{\operatorname{rank}(X)\le k}\|A-X\|_2 = \sigma_{k+1}.
+\end{equation}
+Truncating small singular values regularizes the pseudoinverse \cite{hansen2010discrete}. The tSVD also provides a reference for the randomized approximation of $K$ in Section~\ref{sec:rsvd}.
 
 
 \subsubsection{Condition number}\label{sec:condition_number}
@@ -212,10 +205,6 @@ The condition number $\kappa = \kappa(A)$ of a matrix $A \in \mathbb{R}^{n \time
     \frac{\sigma_1}{\sigma_n},
 \end{equation*}
 assuming $A^{-1}$ exists. If $A$ is singular, then $\kappa(A) = \infty$. When $\kappa(A)$ is large, then a small change in $y$ results in a large change in the solution $x = A^{-1} y$, a typical property of ill-conditioned problems.
-
-
-\subsubsection{Truncated SVD}\label{sec:tsvd}
-The best rank-$k$ approximation of $A$ given by the Eckart-Young-Mirsky theorem, $A_k = U_k \Sigma_k V_k^T$, is known as the truncated SVD (tSVD). Since it truncates the small singular values of $A$, it serves as a regularization technique \cite{hansen2010discrete}. The tSVD also provides a natural reference for the approximate methods developed in this paper.
 
 
 \subsubsection{The pseudoinverse}\label{sec:the_pseudoinverse}

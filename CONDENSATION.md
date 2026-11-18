@@ -113,6 +113,13 @@ and the diff. At the final batch, search live TeX for retired labels
 `sec:reconstruction_error_using_the_adjoint_operator`, and removed figure/table
 labels, distinguishing legitimate uses of the adjoint from the retired variant.
 
+## Current theory edit (18 November 2026)
+
+Keep the sampling-distribution study. Trim §2.4 in place for a mathematically mature audience. The agreed structure is one subsection on SVD, truncation, the pseudoinverse and conditioning, followed by the existing rSVD subsection and algorithm. This supersedes the proposed relocations below.
+
+- First review: opening and SVD/tSVD passage prepared. The noisy-data comparison now cites the tSVD formula directly.
+- Next review: integrate the pseudoinverse and condition number into the SVD subsection and check their incoming references.
+
 ## Section-by-section checklist
 
 Paths in the following sections are relative to the repository. In the result
