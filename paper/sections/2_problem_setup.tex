@@ -184,7 +184,7 @@ The weights $W$ can include prior knowledge about the solution to penalize speci
 \subsection{SVD and low-rank approximations}
 The rapid decay of the singular values of $K$ makes it possible to approximate $K$ well by a low-rank matrix. Its right singular vectors also determine the regularization weights in Section~\ref{sec:the_discrete_inverse_problem}.
 
-\subsubsection{Singular value decomposition}
+\subsubsection{Singular value decomposition}\label{sec:svd}
 The singular value decomposition of a matrix $A\in\mathbb R^{m\times n}$ of rank $q$ is $A=U\Sigma V^T$, where $U\in\mathbb R^{m\times q}$ and $V\in\mathbb R^{n\times q}$ have orthonormal columns and $\Sigma=\operatorname{diag}(\sigma_1,\dots,\sigma_q)$ with $\sigma_1\ge\cdots\ge\sigma_q>0$. The columns $u_i$ and $v_i$ of $U$ and $V$ are the left and right singular vectors of $A$, respectively.
 
 Keeping the first $k$ singular values and the corresponding singular vectors gives the truncated SVD (tSVD),
@@ -198,23 +198,13 @@ By the Eckart--Young--Mirsky theorem \cite{eckartApproximationOneMatrix1936}, $A
 Truncating small singular values regularizes the pseudoinverse \cite{hansen2010discrete}. The tSVD also provides a reference for the randomized approximation of $K$ in Section~\ref{sec:rsvd}.
 
 
-\subsubsection{Condition number}\label{sec:condition_number}
-The condition number $\kappa = \kappa(A)$ of a matrix $A \in \mathbb{R}^{n \times n}$ measures the sensitivity of the solution $x = A^{-1} y$ to perturbations in $y$ \cite{hansen2010discrete}. It is computed as
-\begin{equation*}
-    \kappa(A) =
-    \frac{\sigma_1}{\sigma_n},
-\end{equation*}
-assuming $A^{-1}$ exists. If $A$ is singular, then $\kappa(A) = \infty$. When $\kappa(A)$ is large, then a small change in $y$ results in a large change in the solution $x = A^{-1} y$, a typical property of ill-conditioned problems.
-
-
-\subsubsection{The pseudoinverse}\label{sec:the_pseudoinverse}
-For a matrix $A \in \mathbb{R}^{m \times n}$, the Moore-Penrose inverse $A^+$, often referred to as the pseudoinverse, is a generalization of the inverse of a matrix. If $A = U \Sigma V^T$ is the SVD of $A$, then the pseudoinverse is
+The Moore--Penrose pseudoinverse of $A$ is
 \begin{equation}\label{eq:pseudoinverse}
-    A^+ = V \Sigma^+ U^T,
+    A^+ = V\Sigma^{-1}U^T,
 \end{equation}
-where $\Sigma^+$ is the pseudoinverse of $\Sigma$. The pseudoinverse of $\Sigma$ can be computed by transposing the matrix and replacing each non-zero diagonal entry with its reciprocal \cite{golubMatrixComputations4th2013}. The pseudoinverse $A^+$ is unique and always exists, and for invertible $A$, $A^+ = A^{-1}$.
+where $\Sigma^{-1}=\operatorname{diag}(1/\sigma_1,\dots,1/\sigma_q)$. For the least-squares problem $\min_x\|Ax-y\|_2$, $A^+y$ is the solution with the smallest Euclidean norm \cite[Section~5.5]{golubMatrixComputations4th2013}. The identity $A^+A=VV^T$ gives the orthogonal projection onto the row space of $A$, used below to compute the regularization weights.
 
-For the least-squares problem $\min \|Ax - y \|$, the pseudoinverse provides the least-squares solution $x = A^+ y$. If the least-squares solution is not unique, then $A^+ y$ is the solution with the smallest Euclidean norm. For details, see Section~5.5 in Golub and Van Loan \cite{golubMatrixComputations4th2013}.
+For a nonsingular square matrix $A\in\mathbb R^{n\times n}$, the condition number in the spectral norm is $\kappa(A)=\sigma_1/\sigma_n$ \cite{hansen2010discrete}.
 
 
 \subsubsection{Randomized SVD}
@@ -268,4 +258,4 @@ The weights in Equation~\eqref{eq:weights} are defined by measuring length in th
     + \lambda^2 \| W x \|_M^2.
 \end{equation}
 
-In practice, the pseudoinverse $K^+$ amplifies errors associated with small singular values of $K$, and must therefore be approximated by the truncated pseudoinverse $K_k^+$, defined using the $k$ largest singular vectors in Equation~\eqref{eq:pseudoinverse}. The weights are correspondingly approximated using $P_k = K_k^+ K$.
+In practice, the pseudoinverse $K^+$ amplifies errors associated with small singular values of $K$, and must therefore be approximated by the truncated pseudoinverse $K_k^+$, obtained by keeping the first $k$ singular components in Equation~\eqref{eq:pseudoinverse}. The weights are correspondingly approximated using $P_k = K_k^+ K$.

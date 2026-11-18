@@ -117,8 +117,8 @@ labels, distinguishing legitimate uses of the adjoint from the retired variant.
 
 Keep the sampling-distribution study. Trim §2.4 in place for a mathematically mature audience. The agreed structure is one subsection on SVD, truncation, the pseudoinverse and conditioning, followed by the existing rSVD subsection and algorithm. This supersedes the proposed relocations below.
 
-- First review: opening and SVD/tSVD passage prepared. The noisy-data comparison now cites the tSVD formula directly.
-- Next review: integrate the pseudoinverse and condition number into the SVD subsection and check their incoming references.
+- First review: opening and SVD/tSVD passage committed as `bf2ac5a` after author edits. The noisy-data comparison now cites the tSVD formula directly.
+- Second review pending. The SVD subsection now includes the pseudoinverse and condition number. The noisy-data discussion points to the merged subsection and the truncated pseudoinverse definition refers to its singular components.
 
 ## Section-by-section checklist
 

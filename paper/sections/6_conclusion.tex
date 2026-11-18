@@ -87,7 +87,7 @@ The captured subspace $\operatorname{range}(Q)$ depends on the random test vecto
 \subsubsection{Reconstructions under noisy data}
 Choosing $k$ too large worsens reconstruction quality on noisy data (Section~\ref{sec:accuracy_on_noisy_data}), and the target rank acts as a regularization parameter in the same manner as the truncation rank of tSVD.
 
-For a noisy measurement $\tilde y = y + \epsilon$, $y = K x$, we can write the minimum-norm least-squares solution as $x^* = K^+ \tilde y = K^+ y + K^+ \epsilon$ (Section~\ref{sec:the_pseudoinverse}). Expanding in terms of the SVD components,
+For a noisy measurement $\tilde y = y + \epsilon$, $y = K x$, we can write the minimum-norm least-squares solution as $x^* = K^+ \tilde y = K^+ y + K^+ \epsilon$ (Section~\ref{sec:svd}). Expanding in terms of the SVD components,
 \begin{equation*}
     x^* = \sum_{i=1}^{N_b}
     \left(\frac{u_i^T y + u_i^T \epsilon}{\sigma_i}\right) v_i,
